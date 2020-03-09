@@ -1,4 +1,4 @@
-# import binascii
+import binascii
 import logging
 import queue
 import socket
@@ -56,7 +56,7 @@ class GnssUBlox(threading.Thread):
 
     def sos_state(self):
         logger.debug('getting SOS state')
-        msg_upd_sos_poll = UbxPoll(*UbxUpdSos.CLASS_ID())
+        msg_upd_sos_poll = UbxUpdSosPoll()
         res = self.poll(msg_upd_sos_poll)
         if res:
             return res.response
@@ -74,8 +74,8 @@ class GnssUBlox(threading.Thread):
         self.send(msg)
         self.wait()
 
-#msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
-#msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
+# msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
+# msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
 
     def poll(self, message):
         """
