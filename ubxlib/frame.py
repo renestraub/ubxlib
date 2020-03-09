@@ -20,13 +20,12 @@ class UbxFrame(object):
     def CLASS_ID(cls):
         return cls.CLASS, cls.ID
 
-    def __init__(self, cls, id, length=0, data=bytearray()):
+    def __init__(self, cls, id, data=bytearray()):
         super().__init__()
         self.cls = cls
         self.id = id
-        self.length = length
         self.data = data
-        assert self.length == len(self.data)
+        self.length = len(self.data)
 
         self.checksum = Checksum()
         self._calc_checksum()
@@ -57,7 +56,7 @@ class UbxFrame(object):
         for d in self.data:
             self.checksum.add(d)
 
-        self.cka,self.ckb = self.checksum.value()
+        self.cka, self.ckb = self.checksum.value()
 
     def __str__(self):
         return f'UBX: cls:{self.cls:02x} id:{self.id:02x} len:{self.length}'
@@ -69,8 +68,17 @@ class UbxPoll(UbxFrame):
 
     Create by specifying u-blox message class and id.
     """
-    def __init__(self, cls, id):
-        super().__init__(cls, id)
+    def __init__(self):
+        print(self.CLASS, self.ID)
+        super().__init__(self.CLASS, self.ID)
+
+
+class UbxUpdSosPoll(UbxPoll):
+    CLASS = 0x09
+    ID = 0x14
+
+    def __init__(self):
+        super().__init__()
 
 
 class UbxUpdSos(UbxFrame):
@@ -78,7 +86,7 @@ class UbxUpdSos(UbxFrame):
     ID = 0x14
 
     def __init__(self, msg):
-        super().__init__(msg.cls, msg.id, msg.length, msg.data)
+        super().__init__(msg.cls, msg.id, msg.data)
         if msg.length == 8 and msg.data[0] == 3:
             self.cmd = msg.data[0]
             self.response = msg.data[4]
@@ -98,7 +106,15 @@ class UbxUpdSosAction(UbxFrame):
     # msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
     def __init__(self, action):
         msg = bytearray.fromhex('01 00 00 00')
-        super().__init__(self.CLASS, self.ID, 4, msg)
+        super().__init__(self.CLASS, self.ID, msg)
+
+
+class UbxCfgTp5Poll(UbxPoll):
+    CLASS = 0x06
+    ID = 0x31
+
+    def __init__(self):
+        super().__init__()
 
 
 class UbxCfgTp5(UbxFrame):
@@ -106,7 +122,7 @@ class UbxCfgTp5(UbxFrame):
     ID = 0x31
 
     def __init__(self, msg):
-        super().__init__(msg.cls, msg.id, msg.length, msg.data)
+        super().__init__(msg.cls, msg.id, msg.data)
         if msg.length == 32:
             tpIdx, version, res1, antCableDelay, rfGroupDelay = struct.unpack('BBhhh', msg.data[0:8])
             print(tpIdx, version, antCableDelay, rfGroupDelay)
