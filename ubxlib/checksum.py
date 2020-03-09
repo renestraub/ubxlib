@@ -5,16 +5,20 @@ class Checksum(object):
     """
     def __init__(self):
         super().__init__()
+        self.reset()
 
     def value(self):
-        return self.cka, self.ckb
+        return self._cka, self._ckb
+
+    def matches(self, cka, ckb):
+        return self._cka == cka and self._ckb == ckb
 
     def reset(self):
-        self.cka = 0
-        self.ckb = 0
+        self._cka = 0
+        self._ckb = 0
 
     def add(self, byte):
-        self.cka += byte
-        self.cka &= 0xFF
-        self.ckb += self.cka
-        self.ckb &= 0xFF
+        self._cka += byte
+        self._cka &= 0xFF
+        self._ckb += self._cka
+        self._ckb &= 0xFF
