@@ -1,7 +1,6 @@
-import binascii
+# import binascii
 import logging
 import struct
-from enum import Enum
 
 from ubxlib.checksum import Checksum
 
@@ -28,12 +27,13 @@ class UbxFrame(object):
         self.length = len(self.data)
 
         self.checksum = Checksum()
-        self._calc_checksum()
 
     def is_class_id(self, cls, id):
         return cls == self.cls and id == self.id
 
     def to_bytes(self):
+        self._calc_checksum()
+
         msg = bytearray([UbxFrame.SYNC_1, UbxFrame.SYNC_2])
         msg.append(self.cls)
         msg.append(self.id)
@@ -69,7 +69,6 @@ class UbxPoll(UbxFrame):
     Create by specifying u-blox message class and id.
     """
     def __init__(self):
-        print(self.CLASS, self.ID)
         super().__init__(self.CLASS, self.ID)
 
 
