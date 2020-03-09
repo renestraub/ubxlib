@@ -3,7 +3,8 @@
 import time
 import logging
 
-from ubxlib.gnss_tool import *
+from ubxlib.server import GnssUBlox
+from ubxlib.frame import UbxCfgTp5Poll
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -28,7 +29,7 @@ r = GnssUBlox('/dev/ttyS3')
 r.setup()
 
 r.sos_remove_backup()
-#quit()
+# quit()
 
 for i in range(0, 1):
     print(f'***** {i} ***********************')
@@ -36,8 +37,8 @@ for i in range(0, 1):
     if response:
         print(f'SOS state is {response}')
 
-    msg_upd_tp5_poll = UbxFrame(*UbxCfgTp5.CLASS_ID())
-    res = r.poll(msg_upd_tp5_poll)
+    msg_cfg_tp5_poll = UbxCfgTp5Poll()
+    res = r.poll(msg_cfg_tp5_poll)
     print(res)
 
     time.sleep(0.87)
