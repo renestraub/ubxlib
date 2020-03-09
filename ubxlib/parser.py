@@ -1,14 +1,8 @@
-import binascii
 import logging
-import queue
-# import socket
-import struct
-# import sys
-# import threading
-import time
 from enum import Enum
 
-from ubxlib.frame import *
+from ubxlib.frame import UbxFrame, UbxUpdSos, UbxCfgTp5
+from ubxlib.checksum import Checksum
 
 
 logger = logging.getLogger('gnss_tool')
@@ -29,87 +23,86 @@ class UbxParser(object):
         """
         Parser states
         """
-        init = 1
-        sync = 2
-        cls = 3
-        id = 4
-        len1 = 5
-        len2 = 6
-        data = 7
-        crc1 = 8
-        crc2 = 9
+        INIT = 1
+        SYNC = 2
+        CLASS = 3
+        ID = 4
+        LEN1 = 5
+        LEN2 = 6
+        DATA = 7
+        CRC1 = 8
+        CRC2 = 9
 
     def __init__(self, rx_queue):
         super().__init__()
 
         self.rx_queue = rx_queue
-        self.state = __class__.State.init
+        self.checksum = Checksum()
 
-        self.msg_class = 0
-        self.msg_id = 0
-        self.msg_len = 0
-        self.msg_data = bytearray()
-        self.ofs = 0
-        self.cka = 0
-        self.ckb = 0
+        self._reset()
+        self.state = __class__.State.INIT
 
     def process(self, data):
         for d in data:
-            if self.state == __class__.State.init:
+            if self.state == __class__.State.INIT:
                 if d == UbxFrame.SYNC_1:
-                    self.state = __class__.State.sync
+                    self.state = __class__.State.SYNC
 
-            elif self.state == __class__.State.sync:
+            elif self.state == __class__.State.SYNC:
                 if d == UbxFrame.SYNC_2:
                     self._reset()
-                    self.state = __class__.State.cls
+                    self.state = __class__.State.CLASS
                 else:
-                    self.state = __class__.State.init
+                    self.state = __class__.State.INIT
 
-            elif self.state == __class__.State.cls:
+            elif self.state == __class__.State.CLASS:
                 self.msg_class = d
-                self.state = __class__.State.id
+                self.checksum.add(d)
+                self.state = __class__.State.ID
 
-            elif self.state == __class__.State.id:
+            elif self.state == __class__.State.ID:
                 self.msg_id = d
-                self.state = __class__.State.len1
+                self.checksum.add(d)
+                self.state = __class__.State.LEN1
 
-            elif self.state == __class__.State.len1:
+            elif self.state == __class__.State.LEN1:
                 self.msg_len = d
-                self.state = __class__.State.len2
+                self.checksum.add(d)
+                self.state = __class__.State.LEN2
 
-            elif self.state == __class__.State.len2:
+            elif self.state == __class__.State.LEN2:
                 self.msg_len = self.msg_len + (d * 256)
+                self.checksum.add(d)
                 # TODO: Handle case with len = 0 -> goto CRC directly
                 # TODO: Handle case with unreasonable size
                 self.ofs = 0
-                self.state = __class__.State.data
+                self.state = __class__.State.DATA
 
-            elif self.state == __class__.State.data:
+            elif self.state == __class__.State.DATA:
                 self.msg_data.append(d)
+                self.checksum.add(d)
                 self.ofs += 1
                 if self.ofs == self.msg_len:
-                    self.state = __class__.State.crc1
+                    self.state = __class__.State.CRC1
 
-            elif self.state == __class__.State.crc1:
+            elif self.state == __class__.State.CRC1:
                 self.cka = d
-                self.state = __class__.State.crc2
+                self.state = __class__.State.CRC2
 
-            elif self.state == __class__.State.crc2:
+            elif self.state == __class__.State.CRC2:
                 self.ckb = d
 
-                # Build frame from received data. This computes the checksum
                 # if checksum matches received checksum forward message to parser
-                frame = UbxFrame(self.msg_class, self.msg_id, self.msg_len, self.msg_data)
-                if frame.cka == self.cka and frame.ckb == self.ckb:
-                    self.parse_frame(frame)
+                if self.checksum.matches(self.cka, self.ckb):
+                    self.parse_frame(self.msg_class, self.msg_id, self.msg_data)
                 else:
                     logger.warning(f'checksum error in frame')
 
                 self._reset()
-                self.state = __class__.State.init
+                self.state = __class__.State.INIT
 
-    def parse_frame(self, ubx_frame):
+    def parse_frame(self, msg_class, msg_id, msg_data):
+        ubx_frame = UbxFrame(self.msg_class, self.msg_id, self.msg_data)
         if ubx_frame.is_class_id(0x09, 0x14):
             # logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(ubx_frame.to_bytes())}')
             frame = UbxUpdSos(ubx_frame)
@@ -130,3 +123,5 @@ class UbxParser(object):
         self.cka = 0
         self.ckb = 0
         self.ofs = 0
+
+        self.checksum.reset()
