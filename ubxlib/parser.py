@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 
-from ubxlib.frame import UbxFrame, UbxUpdSos, UbxCfgTp5
+from ubxlib.frame import UbxFrame
 from ubxlib.checksum import Checksum
 
 
@@ -92,28 +92,15 @@ class UbxParser(object):
             elif self.state == __class__.State.CRC2:
                 self.ckb = d
 
-                # if checksum matches received checksum forward message to parser
+                # if checksum matches received checksum put frame in receive queue
                 if self.checksum.matches(self.cka, self.ckb):
-                    self.parse_frame(self.msg_class, self.msg_id, self.msg_data)
+                    frame = UbxFrame(self.msg_class, self.msg_id, self.msg_data)
+                    self.rx_queue.put(frame)
                 else:
                     logger.warning(f'checksum error in frame')
 
                 self._reset()
                 self.state = __class__.State.INIT
-
-    def parse_frame(self, msg_class, msg_id, msg_data):
-        ubx_frame = UbxFrame(self.msg_class, self.msg_id, self.msg_data)
-        if ubx_frame.is_class_id(0x09, 0x14):
-            # logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(ubx_frame.to_bytes())}')
-            frame = UbxUpdSos(ubx_frame)
-        elif ubx_frame.is_class_id(0x06, 0x31):
-            # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(ubx_frame.to_bytes())}')
-            frame = UbxCfgTp5(ubx_frame)
-        else:
-            # If we can't parse the frame, return as is
-            frame = ubx_frame
-
-        self.rx_queue.put(frame)
 
     def _reset(self):
         self.msg_class = 0

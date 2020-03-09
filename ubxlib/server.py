@@ -2,13 +2,13 @@ import binascii
 import logging
 import queue
 import socket
-# import struct
 import sys
 import threading
 import time
-from enum import Enum
 
-from ubxlib.frame import *
+from ubxlib.frame import UbxFrame
+from ubxlib.frame import UbxCfgTp5Poll, UbxCfgTp5
+from ubxlib.frame import UbxUpdSosPoll, UbxUpdSosAction, UbxUpdSos
 from ubxlib.parser import UbxParser
 
 
@@ -138,7 +138,18 @@ class GnssUBlox(threading.Thread):
                 logger.debug(f'got response {res}')
                 if isinstance(res, UbxFrame):
                     if res.cls == self.wait_msg_class and res.id == self.wait_msg_id:
-                        return res
+                        if res.is_class_id(0x09, 0x14):
+                            # logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(ubx_frame.to_bytes())}')
+                            frame = UbxUpdSos(res)
+                        elif res.is_class_id(0x06, 0x31):
+                            # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(ubx_frame.to_bytes())}')
+                            frame = UbxCfgTp5(res)
+                        else:
+                            # If we can't parse the frame, return as is
+                            frame = res
+
+                        return frame
+
             except queue.Empty:
                 logger.warning('timeout...')
 
