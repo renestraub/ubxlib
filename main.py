@@ -6,6 +6,7 @@ import logging
 from ubxlib.server import GnssUBlox
 from ubxlib.frame import UbxAckAck
 from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
+from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSosAction
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -29,14 +30,37 @@ msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
 r = GnssUBlox('/dev/ttyS3')
 r.setup()
 
-# r.sos_remove_backup()
-# quit()
+# Remove backup
+m = UbxUpdSosAction()
+m._cmd = 1
+m._res1_1 = 0
+m._res1_2 = 0
+m._res1_3 = 0
+#m.fields['res1_1'] = 0
+#m.fields['res1_2'] = 0
+#m.fields['res1_3'] = 0
+m.pack()
+print(m)
+
+print(m._cmd)
+
+print(UbxAckAck.CLASS_ID())
+quit()
+
+r.expect(0x05, 0x01)
+r.send(m)
+r.wait()
+
+quit()
 
 for i in range(0, 1):
     print(f'***** {i} ***********************')
-    response = r.sos_state()
-    if response:
-        print(f'SOS state is {response}')
+
+    logger.debug('getting SOS state')
+    msg_upd_sos_poll = UbxUpdSosPoll()
+    res = r.poll(msg_upd_sos_poll)
+    if res:
+        print(f'SOS state is {res.fields["response"]}')
 
     msg_cfg_tp5_poll = UbxCfgTp5Poll()
     res = r.poll(msg_cfg_tp5_poll)
@@ -58,3 +82,28 @@ for i in range(0, 1):
     time.sleep(0.87)
 
 r.cleanup()
+
+"""
+    def sos_state(self):
+        logger.debug('getting SOS state')
+        msg_upd_sos_poll = UbxUpdSosPoll()
+        res = self.poll(msg_upd_sos_poll)
+        if res:
+            return res.fields['response']
+
+    def sos_create_backup(self):
+        pass
+
+    def sos_remove_backup(self):
+        logger.debug('removing state backup file')
+
+        msg = UbxUpdSosAction(0)
+        print(msg.to_bytes())
+
+        self.expect(0x05, 0x01)
+        self.send(msg)
+        self.wait()
+
+# msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
+# msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
+"""
