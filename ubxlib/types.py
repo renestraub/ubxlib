@@ -53,12 +53,12 @@ class Fields(object):
         self._next = 0
 
     def add(self, field):
-        # Create named entry in dictionary for value
-        field.order = self._next
-        self._next += 1
+        # Insert order (1, 2, 3, ..) in Item object, so that we can later
+        # pack/unpack in correct order
+        field.order = self.next_ord()
 
+        # Create named entry in dictionary for value
         self._fields[field.name] = field
-        # TODO: default value
 
     def unpack(self, data):
         #print('unpacking from data')
@@ -99,6 +99,11 @@ class Fields(object):
         # print(data)
 
         return data
+
+    def next_ord(self):
+        ret = self._next
+        self._next += 1
+        return ret
 
     def __setattr__(self, name, value):
         """
