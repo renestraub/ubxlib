@@ -91,16 +91,6 @@ class UbxFrame(object):
         return res
 
 
-class UbxPoll(UbxFrame):
-    """
-    Base class for a polling frame.
-
-    Create by specifying u-blox message class and id.
-    """
-    def __init__(self):
-        super().__init__()
-
-
 class UbxAckAck(UbxFrame):
     CID = UbxCID(0x05, 0x01)
     NAME = 'UBX-ACK-ACK'

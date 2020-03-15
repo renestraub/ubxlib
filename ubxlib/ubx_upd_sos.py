@@ -1,10 +1,10 @@
 import struct
 
-from ubxlib.frame import UbxFrame, UbxPoll, UbxCID
+from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.types import U1
 
 
-class UbxUpdSosPoll(UbxPoll):
+class UbxUpdSosPoll(UbxFrame):
     CID = UbxCID(0x09, 0x14)
     NAME = 'UBX-CFG-SOS-POLL'
 

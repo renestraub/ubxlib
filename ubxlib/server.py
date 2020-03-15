@@ -62,7 +62,6 @@ class GnssUBlox(threading.Thread):
         - sends the specified poll message
         - waits for receiver message with same class/id as poll message
         """
-        # TODO: UbxPoll
         assert isinstance(message, UbxFrame)
         self.expect(message.CID)
         self.send(message)
@@ -80,7 +79,7 @@ class GnssUBlox(threading.Thread):
     def send(self, ubx_message):
         try:
             logger.debug(f'sending {ubx_message}')
-            
+
             self.control_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.control_sock.connect(GnssUBlox.gpsd_control_socket)
 

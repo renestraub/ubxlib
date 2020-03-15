@@ -1,10 +1,10 @@
 import struct
 
-from ubxlib.frame import UbxFrame, UbxPoll, UbxCID
+from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.types import U1, I2, I4, X4
 
 
-class UbxCfgTp5Poll(UbxPoll):
+class UbxCfgTp5Poll(UbxFrame):
     CID = UbxCID(0x06, 0x31)
     NAME = 'UBX-CFG-TP5-POLL'
 
