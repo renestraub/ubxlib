@@ -1,11 +1,7 @@
-import logging
 import struct
 
 from ubxlib.frame import UbxFrame, UbxPoll, UbxCID
-from ubxlib.frame import U1, I2, I4, X4
-
-
-logger = logging.getLogger('gnss_tool')
+from ubxlib.types import U1, I2, I4, X4
 
 
 class UbxCfgTp5Poll(UbxPoll):
@@ -20,28 +16,18 @@ class UbxCfgTp5(UbxFrame):
     CID = UbxCID(0x06, 0x31)
     NAME = 'UBX-CFG-TP5'
 
-    """
-    @classmethod
-    def construct(cls, data):
-        obj = cls()
-        obj.data = data
-        obj.unpack()
-        return obj
-    """
-
     def __init__(self):
-        # super().__init__(msg.cls, msg.id, msg.data)
         super().__init__()
 
-        self.add_field(U1('tpIdx'))
-        self.add_field(U1('version'))
-        self.add_field(U1('res1_1'))
-        self.add_field(U1('res1_2'))
-        self.add_field(I2('antCableDelay'))
-        self.add_field(I2('rfGroupDelay'))
-        self.add_field(I4('freqPeriod'))
-        self.add_field(I4('freqPeriodLock'))
-        self.add_field(I4('pulseLenRatio'))
-        self.add_field(I4('pulseLenRatioLock'))
-        self.add_field(I4('userConfigDelay'))
-        self.add_field(X4('flags'))
+        self.f.add(U1('tpIdx'))
+        self.f.add(U1('version'))
+        self.f.add(U1('res1_1'))
+        self.f.add(U1('res1_2'))
+        self.f.add(I2('antCableDelay'))
+        self.f.add(I2('rfGroupDelay'))
+        self.f.add(I4('freqPeriod'))
+        self.f.add(I4('freqPeriodLock'))
+        self.f.add(I4('pulseLenRatio'))
+        self.f.add(I4('pulseLenRatioLock'))
+        self.f.add(I4('userConfigDelay'))
+        self.f.add(X4('flags'))

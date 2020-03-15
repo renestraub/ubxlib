@@ -7,6 +7,7 @@ import threading
 import time
 
 from ubxlib.frame import UbxFrame
+from ubxlib.frame import UbxAckAck
 from ubxlib.ubx_cfg_tp5 import UbxCfgTp5
 from ubxlib.ubx_upd_sos import UbxUpdSos
 from ubxlib.parser import UbxParser
@@ -78,6 +79,8 @@ class GnssUBlox(threading.Thread):
 
     def send(self, ubx_message):
         try:
+            logger.debug(f'sending {ubx_message}')
+            
             self.control_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.control_sock.connect(GnssUBlox.gpsd_control_socket)
 
@@ -118,7 +121,11 @@ class GnssUBlox(threading.Thread):
                     logger.debug(f'received expected frame {cid}')
 
                     # TODO: Frame Factory
-                    if UbxUpdSos.MATCHES(cid):
+                    if UbxAckAck.MATCHES(cid):
+                        # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
+                        frame = UbxAckAck.construct(data)
+                        print(frame)
+                    elif UbxUpdSos.MATCHES(cid):
                         logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(data)}')
                         frame = UbxUpdSos.construct(data)
                     elif UbxCfgTp5.MATCHES(cid):

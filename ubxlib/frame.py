@@ -2,33 +2,11 @@ import logging
 import struct
 
 from ubxlib.checksum import Checksum
+from ubxlib.types import U1
+from ubxlib.types import Fields
 
 
 logger = logging.getLogger('gnss_tool')
-
-
-class U1(object):
-    def __init__(self, name):
-        self.name = name
-        self.pack = 'B'
-
-
-class I2(object):
-    def __init__(self, name):
-        self.name = name
-        self.pack = 'h'
-
-
-class I4(object):
-    def __init__(self, name):
-        self.name = name
-        self.pack = 'I'
-
-
-class X4(object):
-    def __init__(self, name):
-        self.name = name
-        self.pack = 'I'
 
 
 class UbxCID(object):
@@ -65,9 +43,9 @@ class UbxFrame(object):
     def __init__(self):
         super().__init__()
         self.data = bytearray()
+        # TODO: Do we need checksum as member?
         self.checksum = Checksum()
-        self.fields = dict()
-        self.field_list = []
+        self.f = Fields()
 
     def to_bytes(self):
         self._calc_checksum()
@@ -86,6 +64,12 @@ class UbxFrame(object):
 
         return msg
 
+    def pack(self):
+        self.data = self.f.pack()
+
+    def unpack(self):
+        self.f.unpack(self.data)
+
     def _calc_checksum(self):
         self.checksum.reset()
 
@@ -101,89 +85,9 @@ class UbxFrame(object):
 
         self.cka, self.ckb = self.checksum.value()
 
-    # Field functions
-    # TODO: Subclass Fields
-
-    def add_field(self, field):
-        # Create named entry in dictionary for value
-        self.fields[field.name] = None
-        # Add field to ordered list for packing/unpacking
-        self.field_list.append(field)
-
-    def unpack(self):
-        #print('unpacking from data')
-        #print(f'data {self.data}')
-
-        fmt_string = '<'    # All data is little endian
-        for f in self.field_list:
-            # print(f.name, f.pack)
-            fmt_string += f.pack
-
-        #print(fmt_string)
-        #print(fmt_string, struct.calcsize(fmt_string))
-
-        results = struct.unpack(fmt_string, self.data)
-        #print(results)
-
-        i = 0
-        for f in self.field_list:
-            value = results[i]
-            #print(f'{f.name}: {value}')
-            self.fields[f.name] = results[i]
-            i += 1
-
-    def pack(self):
-        #print('packing')
-        #print(f'data {self.data}')
-
-        fmt_string = '<'    # All data is little endian
-        for f in self.field_list:
-            #print(f.name, f.pack)
-            fmt_string += f.pack
-
-        #print(fmt_string)
-        #print(fmt_string, struct.calcsize(fmt_string))
-
-        fields = ()
-        for f in self.field_list:
-            value = self.fields[f.name]
-            #print(f'{f.name}: {value}')
-            fields += (value, )
-
-        data = struct.pack(fmt_string, *fields)
-        # print(data)
-        self.data = data
-
-    def names(self):
-        [print(a.name) for a in self.field_list]
-
-    def __setattr__(self, name, value):
-        """
-        Overload to allow direct access to fields
-        """
-        if name[0:2] == 'f_':
-            print(f'*** setting field {name}, {value}')
-            self.fields[name[2:]] = value
-        else:
-            return super().__setattr__(name, value)
-
-    def __getattribute__(self, name):
-        """
-        Overload to allow direct access to fields
-        """
-        if name[0:2] == 'f_':
-            value = self.fields[name[2:]]
-            print(f'*** getting field {name} -> {value}')
-            return value
-        else:
-            return super().__getattribute__(name)
-
     def __str__(self):
         res = f'{self.NAME} {self.CID}'
-        # res = f'{self.NAME} cls:{self.cls:02x} id:{self.id:02x} len:{self.length}'
-        for f in self.field_list:
-            res += f'\n  {f.name}: {self.fields[f.name]}'
-
+        res += str(self.f)
         return res
 
 
@@ -203,3 +107,6 @@ class UbxAckAck(UbxFrame):
 
     def __init__(self):
         super().__init__()
+
+        self.f.add(U1('clsId'))
+        self.f.add(U1('msgId'))

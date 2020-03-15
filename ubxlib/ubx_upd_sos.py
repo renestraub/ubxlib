@@ -1,11 +1,7 @@
-import logging
 import struct
 
 from ubxlib.frame import UbxFrame, UbxPoll, UbxCID
-from ubxlib.frame import U1
-
-
-logger = logging.getLogger('gnss_tool')
+from ubxlib.types import U1
 
 
 class UbxUpdSosPoll(UbxPoll):
@@ -23,14 +19,14 @@ class UbxUpdSos(UbxFrame):
     def __init__(self):
         super().__init__()
 
-        self.add_field(U1('cmd'))
-        self.add_field(U1('res1_1'))
-        self.add_field(U1('res1_2'))
-        self.add_field(U1('res1_3'))
-        self.add_field(U1('response'))
-        self.add_field(U1('res2_1'))
-        self.add_field(U1('res2_2'))
-        self.add_field(U1('res2_3'))
+        self.f.add(U1('cmd'))
+        self.f.add(U1('res1_1'))
+        self.f.add(U1('res1_2'))
+        self.f.add(U1('res1_3'))
+        self.f.add(U1('response'))
+        self.f.add(U1('res2_1'))
+        self.f.add(U1('res2_2'))
+        self.f.add(U1('res2_3'))
 
 
 class UbxUpdSosAction(UbxFrame):
@@ -40,7 +36,7 @@ class UbxUpdSosAction(UbxFrame):
     def __init__(self):
         super().__init__()
 
-        self.add_field(U1('cmd'))
-        self.add_field(U1('res1_1'))
-        self.add_field(U1('res1_2'))
-        self.add_field(U1('res1_3'))
+        self.f.add(U1('cmd'))
+        self.f.add(U1('res1_1'))
+        self.f.add(U1('res1_2'))
+        self.f.add(U1('res1_3'))
