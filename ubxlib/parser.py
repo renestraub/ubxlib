@@ -1,7 +1,7 @@
 import logging
 from enum import Enum
 
-from ubxlib.frame import UbxFrame
+from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.checksum import Checksum
 
 
@@ -94,13 +94,8 @@ class UbxParser(object):
 
                 # if checksum matches received checksum put frame in receive queue
                 if self.checksum.matches(self.cka, self.ckb):
-                    # frame = UbxFrame(self.msg_class, self.msg_id, self.msg_data)
-                    # TODO: Replace by using tuple instead of UbxFrame
-                    frame = UbxFrame()
-                    frame.cls = self.msg_class
-                    frame.id = self.msg_id
-                    frame.data = self.msg_data
-                    self.rx_queue.put(frame)
+                    # Send CID and data as tuple to server
+                    self.rx_queue.put((UbxCID(self.msg_class, self.msg_id), self.msg_data))
                 else:
                     logger.warning(f'checksum error in frame, discarding')
 

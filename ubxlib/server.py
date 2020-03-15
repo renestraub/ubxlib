@@ -63,20 +63,18 @@ class GnssUBlox(threading.Thread):
         """
         # TODO: UbxPoll
         assert isinstance(message, UbxFrame)
-        # assert message.length == 0      # poll message have no payload
-        # print(*message.CLASS_ID())
-        self.expect(*message.CLASS_ID())
+        self.expect(message.CID)
         self.send(message)
         res = self.wait()
 
         return res
 
-    def expect(self, msg_class, msg_id):
+    def expect(self, cid):
         """
         Define message message to wait for
         """
-        self.wait_msg_class = msg_class
-        self.wait_msg_id = msg_id
+        logger.debug(f'expecting {cid}')
+        self.wait_cid = cid
 
     def send(self, ubx_message):
         try:
@@ -113,29 +111,25 @@ class GnssUBlox(threading.Thread):
         time_end = time.time() + timeout
         while time.time() < time_end:
             try:
-                res = self.response_queue.get(True, timeout)
-                logger.debug(f'got response {res}')
-                if isinstance(res, UbxFrame):
-                    # print(res.cls, res.id)
-                    if res.cls == self.wait_msg_class and res.id == self.wait_msg_id:
-                        # TODO: Frame Factory
-                        if UbxUpdSos.MATCHES(res.cls, res.id):
-                            # logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(ubx_frame.to_bytes())}')
-                            #frame = UbxUpdSos()
-                            #frame.data = res.data
-                            #frame.unpack()
-                            frame = UbxUpdSos.construct(res.data)
-                        elif UbxCfgTp5.MATCHES(res.cls, res.id):
-                            # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(ubx_frame.to_bytes())}')
-                            #frame = UbxCfgTp5()
-                            #frame.data = res.data
-                            #frame.unpack()
-                            frame = UbxCfgTp5.construct(res.data)
-                        else:
-                            # If we can't parse the frame, return as is
-                            frame = res
+                cid, data = self.response_queue.get(True, timeout)
+                logger.debug(f'got response {cid}')
 
-                        return frame
+                if cid == self.wait_cid:
+                    logger.debug(f'received expected frame {cid}')
+
+                    # TODO: Frame Factory
+                    if UbxUpdSos.MATCHES(cid):
+                        logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(data)}')
+                        frame = UbxUpdSos.construct(data)
+                    elif UbxCfgTp5.MATCHES(cid):
+                        # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
+                        frame = UbxCfgTp5.construct(data)
+                    else:
+                        # If we can't parse the frame, return as is
+                        logger.debug(f'default: {binascii.hexlify(data)}')
+                        frame = UbxFrame()  #.construct(data)
+
+                    return frame
 
             except queue.Empty:
                 logger.warning('timeout...')

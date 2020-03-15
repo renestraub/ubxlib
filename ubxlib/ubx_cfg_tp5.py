@@ -1,7 +1,7 @@
 import logging
 import struct
 
-from ubxlib.frame import UbxFrame, UbxPoll
+from ubxlib.frame import UbxFrame, UbxPoll, UbxCID
 from ubxlib.frame import U1, I2, I4, X4
 
 
@@ -9,8 +9,7 @@ logger = logging.getLogger('gnss_tool')
 
 
 class UbxCfgTp5Poll(UbxPoll):
-    CLASS = 0x06
-    ID = 0x31
+    CID = UbxCID(0x06, 0x31)
     NAME = 'UBX-CFG-TP5-POLL'
 
     def __init__(self):
@@ -18,8 +17,7 @@ class UbxCfgTp5Poll(UbxPoll):
 
 
 class UbxCfgTp5(UbxFrame):
-    CLASS = 0x06
-    ID = 0x31
+    CID = UbxCID(0x06, 0x31)
     NAME = 'UBX-CFG-TP5'
 
     """

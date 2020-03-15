@@ -38,14 +38,11 @@ m.f_res1_2 = 0
 m.f_res1_3 = 0
 m.pack()
 print(m)
-
 print(m.f_cmd)
 
-r.expect(*UbxAckAck.CLASS_ID())
+r.expect(UbxAckAck.CID)
 r.send(m)
 r.wait()
-
-quit()
 
 for i in range(0, 1):
     print(f'***** {i} ***********************')
@@ -59,45 +56,18 @@ for i in range(0, 1):
     msg_cfg_tp5_poll = UbxCfgTp5Poll()
     res = r.poll(msg_cfg_tp5_poll)
     print(res)
-    quit()
 
-    res.fields['flags'] = 1 + 2 + 16    # Active, lock to GPS, isLength
-    res.fields['freqPeriod'] = 1000     # 1 us = kHz
-    res.fields['pulseLenRatio'] = 500   # 500 ns = 50% duty cycle
-
+    res.f_flags |= 1
+    # res.fields['flags'] = 1 + 2 + 16    # Active, lock to GPS, isLength
+    res.f_freqPeriod = 1000     # 1 us = kHz
+    res.f_pulseLenRatio = 500   # 500 ns = 50% duty cycle
     print(res)
-
     res.pack()
 
-    r.expect(0x05, 0x01)
+    r.expect(UbxAckAck.CID)
     r.send(res)
     r.wait()
 
     time.sleep(0.87)
 
 r.cleanup()
-
-"""
-    def sos_state(self):
-        logger.debug('getting SOS state')
-        msg_upd_sos_poll = UbxUpdSosPoll()
-        res = self.poll(msg_upd_sos_poll)
-        if res:
-            return res.fields['response']
-
-    def sos_create_backup(self):
-        pass
-
-    def sos_remove_backup(self):
-        logger.debug('removing state backup file')
-
-        msg = UbxUpdSosAction(0)
-        print(msg.to_bytes())
-
-        self.expect(0x05, 0x01)
-        self.send(msg)
-        self.wait()
-
-# msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
-# msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
-"""

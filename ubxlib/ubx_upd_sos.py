@@ -1,7 +1,7 @@
 import logging
 import struct
 
-from ubxlib.frame import UbxFrame, UbxPoll
+from ubxlib.frame import UbxFrame, UbxPoll, UbxCID
 from ubxlib.frame import U1
 
 
@@ -9,8 +9,7 @@ logger = logging.getLogger('gnss_tool')
 
 
 class UbxUpdSosPoll(UbxPoll):
-    CLASS = 0x09
-    ID = 0x14
+    CID = UbxCID(0x09, 0x14)
     NAME = 'UBX-CFG-SOS-POLL'
 
     def __init__(self):
@@ -18,8 +17,7 @@ class UbxUpdSosPoll(UbxPoll):
 
 
 class UbxUpdSos(UbxFrame):
-    CLASS = 0x09
-    ID = 0x14
+    CID = UbxCID(0x09, 0x14)
     NAME = 'UBX-CFG-SOS'
 
     def __init__(self):
@@ -36,8 +34,7 @@ class UbxUpdSos(UbxFrame):
 
 
 class UbxUpdSosAction(UbxFrame):
-    CLASS = 0x09
-    ID = 0x14
+    CID = UbxCID(0x09, 0x14)
     NAME = 'UBX-CFG-SOS-ACTION'
 
     def __init__(self):

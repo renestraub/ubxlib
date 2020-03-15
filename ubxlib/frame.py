@@ -31,9 +31,21 @@ class X4(object):
         self.pack = 'I'
 
 
+class UbxCID(object):
+    def __init__(self, cls, id):
+        super().__init__()
+        self.cls = cls
+        self.id = id
+
+    def __eq__(self, value):
+        return self.cls == value.cls and self.id == value.id
+
+    def __str__(self):
+        return f'cls:{self.cls:02x} id:{self.id:02x}'
+
+
 class UbxFrame(object):
-    CLASS = -1
-    ID = -1
+    CID = UbxCID(0, 0)
     NAME = 'UBX'
 
     SYNC_1 = 0xb5
@@ -47,37 +59,22 @@ class UbxFrame(object):
         return obj
 
     @classmethod
-    def CLASS_ID(cls):
-        return cls.CLASS, cls.ID
+    def MATCHES(cls, cid):
+        return cls.CID == cid
 
-    @classmethod
-    def MATCHES(cls, a, b):
-        return cls.CLASS == a and cls.ID == b
-
-    # def __init__(self, cls, id, data=bytearray()):
     def __init__(self):
         super().__init__()
-        # TODO: Remove self.cls, self.id and use class members
-        self.cls = self.CLASS  # cls
-        self.id = self.ID  # id
-        self.data = bytearray()  # data
-        # self.length = len(self.data)
-
+        self.data = bytearray()
         self.checksum = Checksum()
         self.fields = dict()
         self.field_list = []
-
-    def is_class_id(self, cls, id):
-        # return cls == self.cls and id == self.id
-        print(cls, id, self.CLASS, self.ID)
-        return cls == self.CLASS and id == self.ID
 
     def to_bytes(self):
         self._calc_checksum()
 
         msg = bytearray([UbxFrame.SYNC_1, UbxFrame.SYNC_2])
-        msg.append(self.cls)
-        msg.append(self.id)
+        msg.append(self.CID.cls)
+        msg.append(self.CID.id)
 
         length = len(self.data)
         msg.append((length >> 0) % 0xFF)
@@ -92,8 +89,8 @@ class UbxFrame(object):
     def _calc_checksum(self):
         self.checksum.reset()
 
-        self.checksum.add(self.cls)
-        self.checksum.add(self.id)
+        self.checksum.add(self.CID.cls)
+        self.checksum.add(self.CID.id)
 
         length = len(self.data)
         self.checksum.add((length >> 0) & 0xFF)
@@ -105,6 +102,7 @@ class UbxFrame(object):
         self.cka, self.ckb = self.checksum.value()
 
     # Field functions
+    # TODO: Subclass Fields
 
     def add_field(self, field):
         # Create named entry in dictionary for value
@@ -181,7 +179,7 @@ class UbxFrame(object):
             return super().__getattribute__(name)
 
     def __str__(self):
-        res = f'{self.NAME} cls:{self.cls:02x} id:{self.id:02x}'
+        res = f'{self.NAME} {self.CID}'
         # res = f'{self.NAME} cls:{self.cls:02x} id:{self.id:02x} len:{self.length}'
         for f in self.field_list:
             res += f'\n  {f.name}: {self.fields[f.name]}'
@@ -200,8 +198,8 @@ class UbxPoll(UbxFrame):
 
 
 class UbxAckAck(UbxFrame):
-    CLASS = 0x05
-    ID = 0x01
+    CID = UbxCID(0x05, 0x01)
+    NAME = 'UBX-ACK-ACK'
 
     def __init__(self):
         super().__init__()
