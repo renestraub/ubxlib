@@ -5,24 +5,24 @@ import struct
 # logger = logging.getLogger('gnss_tool')
 
 
-class Items(object):
-    def __init__(self):
+class Item(object):
+    def __init__(self, value=None):
         self.order = -1
-        self.value = None
+        self.value = value
 
     def __str__(self):
         return f'{self.name}: {self.value}'
 
 
-class U1(Items):
+class U1(Item):
     pack = 'B'
 
     def __init__(self, name):
-        super().__init__()
+        super().__init__(value=0)
         self.name = name
 
 
-class I2(Items):
+class I2(Item):
     pack = 'h'
 
     def __init__(self, name):
@@ -30,7 +30,7 @@ class I2(Items):
         self.name = name
 
 
-class I4(Items):
+class I4(Item):
     pack = 'I'
 
     def __init__(self, name):
@@ -38,7 +38,7 @@ class I4(Items):
         self.name = name
 
 
-class X4(Items):
+class X4(Item):
     pack = 'I'
 
     def __init__(self, name):
