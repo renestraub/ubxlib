@@ -32,22 +32,16 @@ r.setup()
 
 # Remove backup
 m = UbxUpdSosAction()
-m._cmd = 1
-m._res1_1 = 0
-m._res1_2 = 0
-m._res1_3 = 0
-#m.fields['res1_1'] = 0
-#m.fields['res1_2'] = 0
-#m.fields['res1_3'] = 0
+m.f_cmd = 1
+m.f_res1_1 = 0
+m.f_res1_2 = 0
+m.f_res1_3 = 0
 m.pack()
 print(m)
 
-print(m._cmd)
+print(m.f_cmd)
 
-print(UbxAckAck.CLASS_ID())
-quit()
-
-r.expect(0x05, 0x01)
+r.expect(*UbxAckAck.CLASS_ID())
 r.send(m)
 r.wait()
 

@@ -163,9 +163,9 @@ class UbxFrame(object):
         """
         Overload to allow direct access to fields
         """
-        if name[0] == '_':
+        if name[0:2] == 'f_':
             print(f'*** setting field {name}, {value}')
-            self.fields[name[1:]] = value
+            self.fields[name[2:]] = value
         else:
             return super().__setattr__(name, value)
 
@@ -173,8 +173,8 @@ class UbxFrame(object):
         """
         Overload to allow direct access to fields
         """
-        if name[0] == '_':
-            value = self.fields[name[1:]]
+        if name[0:2] == 'f_':
+            value = self.fields[name[2:]]
             print(f'*** getting field {name} -> {value}')
             return value
         else:
