@@ -1,5 +1,3 @@
-import struct
-
 from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.types import U1
 
