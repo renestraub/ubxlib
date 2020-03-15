@@ -7,9 +7,10 @@ import threading
 import time
 
 from ubxlib.frame import UbxFrame
-from ubxlib.frame import UbxCfgTp5Poll, UbxCfgTp5
-from ubxlib.frame import UbxUpdSosPoll, UbxUpdSosAction, UbxUpdSos
+from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll, UbxCfgTp5
+from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSosAction, UbxUpdSos
 from ubxlib.parser import UbxParser
+
 
 
 logger = logging.getLogger('gnss_tool')
@@ -59,7 +60,7 @@ class GnssUBlox(threading.Thread):
         msg_upd_sos_poll = UbxUpdSosPoll()
         res = self.poll(msg_upd_sos_poll)
         if res:
-            return res.response
+            return res.fields['response']
 
     def sos_create_backup(self):
         pass
@@ -84,10 +85,11 @@ class GnssUBlox(threading.Thread):
         - sends the specified poll message
         - waits for receiver message with same class/id as poll message
         """
+        # TODO: UbxPoll
         assert isinstance(message, UbxFrame)
-        assert message.length == 0      # poll message have no payload
-
-        self.expect(message.cls, message.id)
+        # assert message.length == 0      # poll message have no payload
+        print(*message.CLASS_ID())
+        self.expect(*message.CLASS_ID())
         self.send(message)
         res = self.wait()
 
@@ -109,6 +111,7 @@ class GnssUBlox(threading.Thread):
             # data = sock.recv(512)
             # print(data.decode())
 
+            # TODO: first call .pack()
             msg_in_binary = ubx_message.to_bytes()
             msg_in_ascii = binascii.hexlify(msg_in_binary)
             # logger.debug(f'sending {msg_in_ascii}')
@@ -137,13 +140,21 @@ class GnssUBlox(threading.Thread):
                 res = self.response_queue.get(True, timeout)
                 logger.debug(f'got response {res}')
                 if isinstance(res, UbxFrame):
+                    print(res.cls, res.id)
                     if res.cls == self.wait_msg_class and res.id == self.wait_msg_id:
-                        if res.is_class_id(0x09, 0x14):
+                        # TODO: Frame Factory
+                        if UbxUpdSos.MATCHES(res.cls, res.id):
                             # logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(ubx_frame.to_bytes())}')
-                            frame = UbxUpdSos(res)
-                        elif res.is_class_id(0x06, 0x31):
+                            #frame = UbxUpdSos()
+                            #frame.data = res.data
+                            #frame.unpack()
+                            frame = UbxUpdSos.construct(res.data)
+                        elif UbxCfgTp5.MATCHES(res.cls, res.id):
                             # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(ubx_frame.to_bytes())}')
-                            frame = UbxCfgTp5(res)
+                            #frame = UbxCfgTp5()
+                            #frame.data = res.data
+                            #frame.unpack()
+                            frame = UbxCfgTp5.construct(res.data)
                         else:
                             # If we can't parse the frame, return as is
                             frame = res

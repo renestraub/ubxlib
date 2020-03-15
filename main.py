@@ -4,7 +4,8 @@ import time
 import logging
 
 from ubxlib.server import GnssUBlox
-from ubxlib.frame import UbxCfgTp5Poll
+from ubxlib.frame import UbxAckAck
+from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -28,7 +29,7 @@ msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
 r = GnssUBlox('/dev/ttyS3')
 r.setup()
 
-r.sos_remove_backup()
+# r.sos_remove_backup()
 # quit()
 
 for i in range(0, 1):
@@ -40,6 +41,19 @@ for i in range(0, 1):
     msg_cfg_tp5_poll = UbxCfgTp5Poll()
     res = r.poll(msg_cfg_tp5_poll)
     print(res)
+    quit()
+
+    res.fields['flags'] = 1 + 2 + 16    # Active, lock to GPS, isLength
+    res.fields['freqPeriod'] = 1000     # 1 us = kHz
+    res.fields['pulseLenRatio'] = 500   # 500 ns = 50% duty cycle
+
+    print(res)
+
+    res.pack()
+
+    r.expect(0x05, 0x01)
+    r.send(res)
+    r.wait()
 
     time.sleep(0.87)
 
