@@ -47,5 +47,3 @@ class UbxCfgTp5(UbxFrame):
         self.add_field(I4('pulseLenRatioLock'))
         self.add_field(I4('userConfigDelay'))
         self.add_field(X4('flags'))
-
-        # self.unpack()

@@ -7,10 +7,9 @@ import threading
 import time
 
 from ubxlib.frame import UbxFrame
-from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll, UbxCfgTp5
-from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSosAction, UbxUpdSos
+from ubxlib.ubx_cfg_tp5 import UbxCfgTp5
+from ubxlib.ubx_upd_sos import UbxUpdSos
 from ubxlib.parser import UbxParser
-
 
 
 logger = logging.getLogger('gnss_tool')
@@ -55,29 +54,6 @@ class GnssUBlox(threading.Thread):
         self.join(timeout=1.0)
         logger.info('thread stopped')
 
-    def sos_state(self):
-        logger.debug('getting SOS state')
-        msg_upd_sos_poll = UbxUpdSosPoll()
-        res = self.poll(msg_upd_sos_poll)
-        if res:
-            return res.fields['response']
-
-    def sos_create_backup(self):
-        pass
-
-    def sos_remove_backup(self):
-        logger.debug('removing state backup file')
-
-        msg = UbxUpdSosAction(0)
-        print(msg.to_bytes())
-
-        self.expect(0x05, 0x01)
-        self.send(msg)
-        self.wait()
-
-# msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
-# msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
-
     def poll(self, message):
         """
         Poll a receiver status
@@ -88,7 +64,7 @@ class GnssUBlox(threading.Thread):
         # TODO: UbxPoll
         assert isinstance(message, UbxFrame)
         # assert message.length == 0      # poll message have no payload
-        print(*message.CLASS_ID())
+        # print(*message.CLASS_ID())
         self.expect(*message.CLASS_ID())
         self.send(message)
         res = self.wait()
@@ -140,7 +116,7 @@ class GnssUBlox(threading.Thread):
                 res = self.response_queue.get(True, timeout)
                 logger.debug(f'got response {res}')
                 if isinstance(res, UbxFrame):
-                    print(res.cls, res.id)
+                    # print(res.cls, res.id)
                     if res.cls == self.wait_msg_class and res.id == self.wait_msg_id:
                         # TODO: Frame Factory
                         if UbxUpdSos.MATCHES(res.cls, res.id):

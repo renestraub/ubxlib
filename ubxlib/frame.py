@@ -159,6 +159,27 @@ class UbxFrame(object):
     def names(self):
         [print(a.name) for a in self.field_list]
 
+    def __setattr__(self, name, value):
+        """
+        Overload to allow direct access to fields
+        """
+        if name[0] == '_':
+            print(f'*** setting field {name}, {value}')
+            self.fields[name[1:]] = value
+        else:
+            return super().__setattr__(name, value)
+
+    def __getattribute__(self, name):
+        """
+        Overload to allow direct access to fields
+        """
+        if name[0] == '_':
+            value = self.fields[name[1:]]
+            print(f'*** getting field {name} -> {value}')
+            return value
+        else:
+            return super().__getattribute__(name)
+
     def __str__(self):
         res = f'{self.NAME} cls:{self.cls:02x} id:{self.id:02x}'
         # res = f'{self.NAME} cls:{self.cls:02x} id:{self.id:02x} len:{self.length}'
