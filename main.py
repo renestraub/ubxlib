@@ -4,7 +4,7 @@ import time
 import logging
 
 from ubxlib.server import GnssUBlox
-from ubxlib.frame import UbxAckAck
+from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
 from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSosAction
 
@@ -32,24 +32,11 @@ r.setup()
 
 # Remove backup
 m = UbxUpdSosAction()
-# m.f._fields['cmd'].value = 1
-# m.f._fields['res1_1'].value = 0
-# m.f._fields['res1_2'].value = 0
-# m.f._fields['res1_3'].value = 0
 m.f.cmd = 1
-m.f.res1_1 = 0
-m.f.res1_2 = 0
-m.f.res1_3 = 0
 m.pack()
-m.unpack()
 print(m)
-# print(m.f_cmd)
-print(m.f._fields['cmd'].value)
-
-m.f.cmd = 2
-print(m.f._fields['cmd'].value)
 print(m.f.cmd)
-#quit()
+# quit()
 
 r.expect(UbxAckAck.CID)
 r.send(m)
@@ -62,7 +49,6 @@ for i in range(0, 1):
     msg_upd_sos_poll = UbxUpdSosPoll()
     res = r.poll(msg_upd_sos_poll)
     if res:
-#        print(f'SOS state is {res.fields["response"]}')
         print(f'SOS state is {res.f.response}')
 
     msg_cfg_tp5_poll = UbxCfgTp5Poll()

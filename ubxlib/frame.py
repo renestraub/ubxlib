@@ -89,14 +89,3 @@ class UbxFrame(object):
         res = f'{self.NAME} {self.CID}'
         res += str(self.f)
         return res
-
-
-class UbxAckAck(UbxFrame):
-    CID = UbxCID(0x05, 0x01)
-    NAME = 'UBX-ACK-ACK'
-
-    def __init__(self):
-        super().__init__()
-
-        self.f.add(U1('clsId'))
-        self.f.add(U1('msgId'))
