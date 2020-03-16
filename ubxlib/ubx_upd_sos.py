@@ -2,17 +2,19 @@ from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.types import U1
 
 
-class UbxUpdSosPoll(UbxFrame):
+class UbxUpdSos_(UbxFrame):
+    NAME = 'UBX-UPD-SOS'
     CID = UbxCID(0x09, 0x14)
-    NAME = 'UBX-CFG-SOS-POLL'
+
+
+class UbxUpdSosPoll(UbxUpdSos_):
+    NAME = UbxUpdSos_.NAME + '-POLL'
 
     def __init__(self):
         super().__init__()
 
 
-class UbxUpdSos(UbxFrame):
-    CID = UbxCID(0x09, 0x14)
-    NAME = 'UBX-CFG-SOS'
+class UbxUpdSos(UbxUpdSos_):
 
     def __init__(self):
         super().__init__()
@@ -27,9 +29,11 @@ class UbxUpdSos(UbxFrame):
         self.f.add(U1('res2_3'))
 
 
-class UbxUpdSosAction(UbxFrame):
-    CID = UbxCID(0x09, 0x14)
-    NAME = 'UBX-CFG-SOS-ACTION'
+class UbxUpdSosAction(UbxUpdSos_):
+    NAME = UbxUpdSos_.NAME + '-ACTION'
+
+    SAVE = 0
+    CLEAR = 1
 
     def __init__(self):
         super().__init__()
