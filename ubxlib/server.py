@@ -10,6 +10,7 @@ from ubxlib.frame import UbxFrame
 from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_cfg_tp5 import UbxCfgTp5
 from ubxlib.ubx_upd_sos import UbxUpdSos
+from ubxlib.ubx_mon_ver import UbxMonVer
 from ubxlib.parser import UbxParser
 
 
@@ -130,6 +131,9 @@ class GnssUBlox(threading.Thread):
                     elif UbxCfgTp5.MATCHES(cid):
                         # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
                         frame = UbxCfgTp5.construct(data)
+                    elif UbxMonVer.MATCHES(cid):
+                        # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
+                        frame = UbxMonVer.construct(data)
                     else:
                         # If we can't parse the frame, return as is
                         logger.debug(f'default: {binascii.hexlify(data)}')
