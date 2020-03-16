@@ -1,8 +1,4 @@
-# import logging
 import struct
-
-
-# logger = logging.getLogger('gnss_tool')
 
 
 class Item(object):
@@ -10,8 +6,44 @@ class Item(object):
         self.order = -1
         self.value = value
 
+    def unpack(self, data):
+        """
+        Unpacks value, whose type is defined by class
+
+        @param data: bytearray to extract data from
+        @return: number of bytes consumed
+        """
+        fmt_string = '<' + self.pack    # use little endian mode
+        length = struct.calcsize(fmt_string)
+        # print(f'unpacking {length}')
+        results = struct.unpack(fmt_string, data[:length])
+        # print(results[0])
+        self.value = results[0]
+        return length
+
     def __str__(self):
         return f'{self.name}: {self.value}'
+
+
+class CH(Item):
+    def __init__(self, length, name):
+        super().__init__(value='')
+        self.name = name
+        self.length = length
+
+    def unpack(self, data):
+        """
+        Dedicated unpack method for fixed-sized strings
+        """
+        # TODO: Length check
+        # print(f"unpacking {self.length} from {data}")
+        raw_text = data[:self.length]
+        # TODO: Decoder error check
+        text = raw_text.decode()
+        # print(text)
+        self.value = text
+
+        return self.length
 
 
 class U1(Item):
@@ -61,13 +93,26 @@ class Fields(object):
         self._fields[field.name] = field
 
     def unpack(self, data):
+        # print('unpacking from data')
+        # print(f'data {data}')
+
+        work_data = data
+        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
+            # print(f'data {work_data}')
+            consumed = v.unpack(work_data)
+            work_data = work_data[consumed:]
+
+        return work_data
+
+    """
+    def unpack2(self, data):
         #print('unpacking from data')
-        #print(f'data {self.data}')
+        print(f'data {data}')
 
         fmt_string = '<'    # All data is little endian
 
         for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
-            # print(f.name, f.pack)
+            # print(v.name, v.pack)
             fmt_string += v.pack
 
         # print(fmt_string, struct.calcsize(fmt_string))
@@ -80,6 +125,7 @@ class Fields(object):
             # print(f'{f.name}: {value}')
             self._fields[k].value = results[i]
             i += 1
+    """
 
     def pack(self):
         print('packing')
