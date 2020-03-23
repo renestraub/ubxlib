@@ -6,6 +6,11 @@ class Item(object):
         self.order = -1
         self.value = value
 
+    def pack(self):
+        fmt_string = '<' + self.fmt    # use little endian mode
+        data = struct.pack(fmt_string, self.value)
+        return data
+
     def unpack(self, data):
         """
         Unpacks value, whose type is defined by class
@@ -13,7 +18,7 @@ class Item(object):
         @param data: bytearray to extract data from
         @return: number of bytes consumed
         """
-        fmt_string = '<' + self.pack    # use little endian mode
+        fmt_string = '<' + self.fmt    # use little endian mode
         length = struct.calcsize(fmt_string)
         # print(f'unpacking {length}')
         results = struct.unpack(fmt_string, data[:length])
@@ -25,6 +30,29 @@ class Item(object):
         return f'{self.name}: {self.value}'
 
 
+class Padding(Item):
+    def __init__(self, length, name):
+        super().__init__(value=0)
+        self.name = name
+        self.length = length
+
+    def pack(self):
+        """
+        Dedicated unpack method for padding bytes
+
+        Inserts 0x00 padding bytes
+        """
+        return bytearray(b'\x00') * self.length
+
+    def unpack(self, data):
+        """
+        Dedicated unpack method for padding bytes
+
+        Just advances in data buffer
+        """
+        return self.length
+
+
 class CH(Item):
     def __init__(self, length, name):
         super().__init__(value='')
@@ -34,6 +62,10 @@ class CH(Item):
     def unpack(self, data):
         """
         Dedicated unpack method for fixed-sized strings
+
+        Extracts ISO 8859-1 text directly from data and converts it
+        to Python string (Unicode).
+        Advances buffer by fixed size of text.
         """
         # TODO: Length check
         # print(f"unpacking {self.length} from {data}")
@@ -47,7 +79,7 @@ class CH(Item):
 
 
 class U1(Item):
-    pack = 'B'
+    fmt = 'B'
 
     def __init__(self, name):
         super().__init__(value=0)
@@ -55,15 +87,16 @@ class U1(Item):
 
 
 class I2(Item):
-    pack = 'h'
+    fmt = 'h'
 
     def __init__(self, name):
         super().__init__()
+        # TODO: Mave name to base class, provide via ctor
         self.name = name
 
 
 class I4(Item):
-    pack = 'I'
+    fmt = 'I'
 
     def __init__(self, name):
         super().__init__()
@@ -71,7 +104,7 @@ class I4(Item):
 
 
 class X4(Item):
-    pack = 'I'
+    fmt = 'I'
 
     def __init__(self, name):
         super().__init__()
@@ -128,6 +161,15 @@ class Fields(object):
     """
 
     def pack(self):
+        work_data = bytearray()
+        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
+            # print(f'packing {k} {v.value} {type(v)} {v.pack}')
+            work_data += v.pack()
+
+        return work_data
+
+    """
+    def pack2(self):
         print('packing')
 
         fields = ()
@@ -145,6 +187,7 @@ class Fields(object):
         # print(data)
 
         return data
+    """
 
     def next_ord(self):
         ret = self._next
@@ -158,7 +201,7 @@ class Fields(object):
         If variable <name> is found in _fields set its value
         """
         # print(f'*** setting field {name}, {value}')
-        if('_fields' in self.__dict__ and name in self.__dict__['_fields']):
+        if '_fields' in self.__dict__ and name in self.__dict__['_fields']:
             self.__dict__['_fields'][name].value = value
         else:
             return super().__setattr__(name, value)
@@ -182,6 +225,7 @@ class Fields(object):
     def __str__(self):
         res = ''
         for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
-            res += f'\n  {v}'
+            if not isinstance(v, Padding):
+                res += f'\n  {v}'
 
         return res
