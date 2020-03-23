@@ -2,11 +2,17 @@ import struct
 
 
 class Item(object):
-    def __init__(self, value=None):
+    def __init__(self, name, value=None):
         self.order = -1
+        self.name = name
         self.value = value
 
     def pack(self):
+        """
+        Returns packed value
+
+        @return: bytearray with value packed as defined by type
+        """
         fmt_string = '<' + self.fmt    # use little endian mode
         data = struct.pack(fmt_string, self.value)
         return data
@@ -32,8 +38,7 @@ class Item(object):
 
 class Padding(Item):
     def __init__(self, length, name):
-        super().__init__(value=0)
-        self.name = name
+        super().__init__(name, value=0)
         self.length = length
 
     def pack(self):
@@ -55,8 +60,7 @@ class Padding(Item):
 
 class CH(Item):
     def __init__(self, length, name):
-        super().__init__(value='')
-        self.name = name
+        super().__init__(name, value='')
         self.length = length
 
     def unpack(self, data):
@@ -82,33 +86,28 @@ class U1(Item):
     fmt = 'B'
 
     def __init__(self, name):
-        super().__init__(value=0)
-        self.name = name
+        super().__init__(name, value=0)
 
 
 class I2(Item):
     fmt = 'h'
 
     def __init__(self, name):
-        super().__init__()
-        # TODO: Mave name to base class, provide via ctor
-        self.name = name
+        super().__init__(name, value=0)
 
 
 class I4(Item):
     fmt = 'I'
 
     def __init__(self, name):
-        super().__init__()
-        self.name = name
+        super().__init__(name, value=0)
 
 
 class X4(Item):
     fmt = 'I'
 
     def __init__(self, name):
-        super().__init__()
-        self.name = name
+        super().__init__(name, value=0)
 
 
 class Fields(object):
@@ -137,29 +136,6 @@ class Fields(object):
 
         return work_data
 
-    """
-    def unpack2(self, data):
-        #print('unpacking from data')
-        print(f'data {data}')
-
-        fmt_string = '<'    # All data is little endian
-
-        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
-            # print(v.name, v.pack)
-            fmt_string += v.pack
-
-        # print(fmt_string, struct.calcsize(fmt_string))
-        results = struct.unpack(fmt_string, data)
-        # print(results)
-
-        i = 0
-        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
-            value = results[i]
-            # print(f'{f.name}: {value}')
-            self._fields[k].value = results[i]
-            i += 1
-    """
-
     def pack(self):
         work_data = bytearray()
         for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
@@ -167,27 +143,6 @@ class Fields(object):
             work_data += v.pack()
 
         return work_data
-
-    """
-    def pack2(self):
-        print('packing')
-
-        fields = ()
-        fmt_string = '<'    # All data is little endian
-
-        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
-            # print(v.name, v.pack)
-            fmt_string += v.pack
-            # print(f'{v.name}: {v.value}')
-            fields += (v.value, )
-
-        # print(fmt_string, struct.calcsize(fmt_string))
-
-        data = struct.pack(fmt_string, *fields)
-        # print(data)
-
-        return data
-    """
 
     def next_ord(self):
         ret = self._next
