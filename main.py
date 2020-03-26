@@ -2,12 +2,14 @@
 
 import time
 import logging
+import binascii
 
 from ubxlib.server import GnssUBlox
 from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
 from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSosAction
 from ubxlib.ubx_mon_ver import UbxMonVerPoll
+from ubxlib.ubx_esf_status import UbxEsfStatusPoll
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -48,6 +50,12 @@ m = UbxMonVerPoll()
 res = r.poll(m)
 print(res)
 
+m = UbxEsfStatusPoll()
+res = r.poll(m)
+print(res)
+
+quit()
+
 for i in range(0, 1):
     print(f'***** {i} ***********************')
 
@@ -59,13 +67,20 @@ for i in range(0, 1):
         print(f'SOS state is {res.f.response}')
 
     msg_cfg_tp5_poll = UbxCfgTp5Poll()
+    msg_cfg_tp5_poll.f.tpIdx = 1
+    # TODO: .pack has to go elsewhere, better hidden in to_bytes()
+    msg_cfg_tp5_poll.pack()
+    print(msg_cfg_tp5_poll)
+    print(binascii.hexlify(msg_cfg_tp5_poll.to_bytes()))
     res = r.poll(msg_cfg_tp5_poll)
     print(res)
 
-    res.f.flags |= 1
+    res.f.flags &= ~0x01
     # res.fields['flags'] = 1 + 2 + 16    # Active, lock to GPS, isLength
     res.f.freqPeriod = 1000     # 1 us = kHz
+    res.f.freqPeriodLock = 1000     # 1 us = kHz
     res.f.pulseLenRatio = 500   # 500 ns = 50% duty cycle
+    res.f.pulseLenRatioLock = 250   # 250 ns = 25% duty cycle
     # print(res)
     res.pack()
 

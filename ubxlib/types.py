@@ -89,6 +89,13 @@ class U1(Item):
         super().__init__(name, value=0)
 
 
+class U4(Item):
+    fmt = 'I'
+
+    def __init__(self, name):
+        super().__init__(name, value=0)
+
+
 class I2(Item):
     fmt = 'h'
 
@@ -98,6 +105,13 @@ class I2(Item):
 
 class I4(Item):
     fmt = 'I'
+
+    def __init__(self, name):
+        super().__init__(name, value=0)
+
+
+class X1(Item):
+    fmt = 'B'
 
     def __init__(self, name):
         super().__init__(name, value=0)
