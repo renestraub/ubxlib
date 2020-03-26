@@ -1,5 +1,5 @@
 from ubxlib.frame import UbxFrame, UbxCID
-from ubxlib.types import U1, I2, I4, X4
+from ubxlib.types import Padding, U1, I2, I4, X4
 
 
 class UbxCfgTp5Poll(UbxFrame):
@@ -8,6 +8,8 @@ class UbxCfgTp5Poll(UbxFrame):
 
     def __init__(self):
         super().__init__()
+
+        self.f.add(U1('tpIdx'))
 
 
 class UbxCfgTp5(UbxFrame):
@@ -19,8 +21,7 @@ class UbxCfgTp5(UbxFrame):
 
         self.f.add(U1('tpIdx'))
         self.f.add(U1('version'))
-        self.f.add(U1('res1_1'))
-        self.f.add(U1('res1_2'))
+        self.f.add(Padding(2, 'res1'))
         self.f.add(I2('antCableDelay'))
         self.f.add(I2('rfGroupDelay'))
         self.f.add(I4('freqPeriod'))
