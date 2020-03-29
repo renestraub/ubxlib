@@ -7,11 +7,9 @@ import threading
 import time
 
 from ubxlib.frame import UbxFrame
+from ubxlib.frame_factory import FrameFactory
+
 from ubxlib.ubx_ack import UbxAckAck
-from ubxlib.ubx_cfg_tp5 import UbxCfgTp5
-from ubxlib.ubx_upd_sos import UbxUpdSos
-from ubxlib.ubx_mon_ver import UbxMonVer
-from ubxlib.ubx_esf_status import UbxEsfStatus
 from ubxlib.parser import UbxParser
 
 
@@ -121,27 +119,14 @@ class GnssUBlox(threading.Thread):
                 if cid == self.wait_cid:
                     logger.debug(f'received expected frame {cid}')
 
-                    # TODO: Frame Factory
-                    if UbxAckAck.MATCHES(cid):
-                        # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
-                        frame = UbxAckAck.construct(data)
-                        print(frame)
-                    elif UbxUpdSos.MATCHES(cid):
-                        logger.debug(f'UBX-UPD-SOS: {binascii.hexlify(data)}')
-                        frame = UbxUpdSos.construct(data)
-                    elif UbxCfgTp5.MATCHES(cid):
-                        # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
-                        frame = UbxCfgTp5.construct(data)
-                    elif UbxMonVer.MATCHES(cid):
-                        # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
-                        frame = UbxMonVer.construct(data)
-                    elif UbxEsfStatus.MATCHES(cid):
-                        # logger.debug(f'UBX-CFG-TP5: {binascii.hexlify(data)}')
-                        frame = UbxEsfStatus.construct(data)
-                    else:
+                    ff = FrameFactory.getInstance()
+                    try:
+                        frame = ff.build_with_data(cid, data)
+
+                    except KeyError:
                         # If we can't parse the frame, return as is
                         logger.debug(f'default: {binascii.hexlify(data)}')
-                        frame = UbxFrame()  #.construct(data)
+                        frame = UbxFrame()
 
                     return frame
 

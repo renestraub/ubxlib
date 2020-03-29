@@ -6,11 +6,14 @@ import binascii
 
 from ubxlib.server import GnssUBlox
 from ubxlib.ubx_ack import UbxAckAck
-from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
-from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSosAction
-from ubxlib.ubx_mon_ver import UbxMonVerPoll
+from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll, UbxCfgTp5
+from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSos, UbxUpdSosAction
+from ubxlib.ubx_mon_ver import UbxMonVerPoll, UbxMonVer
 from ubxlib.ubx_cfg_rst import UbxCfgRstAction
-from ubxlib.ubx_esf_status import UbxEsfStatusPoll
+from ubxlib.ubx_esf_status import UbxEsfStatusPoll, UbxEsfStatus
+
+from ubxlib.frame import UbxCID
+from ubxlib.frame_factory import FrameFactory
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -19,8 +22,8 @@ logger = logging.getLogger('gnss_tool')
 logger.setLevel(logging.DEBUG)
 
 
+"""
 msg_stop = bytearray.fromhex('06 04 04 00 00 00 08 00')    # stop
-msg_cold_start = bytearray.fromhex('06 04 04 00 FF FF 01 00')  # Cold Start
 msg_cfg_port_poll = bytearray.fromhex('06 00 01 00 01')  # UBX-CFG-PRT poll
 msg_nav_status_poll = bytearray.fromhex('01 03 00 00')
 
@@ -29,9 +32,18 @@ msg_cfg_port_uart_115200 = bytearray.fromhex('06 00 14 00 01 00 00 00 c0 08 00 0
 
 msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
 msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
+"""
+
 
 r = GnssUBlox('/dev/ttyS3')
 r.setup()
+
+ff = FrameFactory.getInstance()
+ff.register(UbxAckAck)
+ff.register(UbxMonVer)
+ff.register(UbxEsfStatus)
+ff.register(UbxUpdSos)
+ff.register(UbxCfgTp5)
 
 """
 # Remove backup
@@ -52,16 +64,15 @@ res = r.poll(m)
 print(res)
 
 m = UbxEsfStatusPoll()
-#res = r.poll(m)
-#print(res)
-
+res = r.poll(m)
+print(res)
 
 m = UbxCfgRstAction()
 m.cold_start()
 m.pack()
 # r.send(m)
 
-quit()
+# quit()
 
 for i in range(0, 1):
     print(f'***** {i} ***********************')
