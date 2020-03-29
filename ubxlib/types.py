@@ -104,7 +104,7 @@ class I2(Item):
 
 
 class I4(Item):
-    fmt = 'I'
+    fmt = 'i'
 
     def __init__(self, name):
         super().__init__(name, value=0)

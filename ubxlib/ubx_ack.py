@@ -1,5 +1,5 @@
 from ubxlib.frame import UbxFrame, UbxCID
-from ubxlib.types import U1, I2, I4, X4
+from ubxlib.types import U1
 
 
 class UbxAckAck(UbxFrame):

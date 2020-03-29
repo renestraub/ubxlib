@@ -30,15 +30,10 @@ class UbxEsfStatus(UbxEsfStatus_):
         self.f.add(Padding(2, 'res2'))
         self.f.add(U1('numSens'))
 
-        """
-        extra_length = len(self.data) - 40
-        extra_info = int(extra_length / 30)
-        for i in range(extra_info):
-            self.f.add(CH(30, f'extension_{i}'))
-        """
+        # Extract upto this place to read number of sensors
         super().unpack()
-        print(self.f.numSens)
 
+        # Build final list
         for sensor in range(self.f.numSens):
             self.f.add(X1(f'sensStatus1_{sensor}'))
             self.f.add(X1(f'sensStatus2_{sensor}'))
