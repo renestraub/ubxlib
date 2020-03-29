@@ -4,7 +4,7 @@ from ubxlib.types import Fields, CH
 
 class UbxMonVer_(UbxFrame):
     CID = UbxCID(0x0A, 0x04)
-    NAME = 'UBX-MON-VER-POLL'
+    NAME = 'UBX-MON-VER'
 
 
 class UbxMonVerPoll(UbxMonVer_):
@@ -18,7 +18,7 @@ class UbxMonVer(UbxMonVer_):
     def __init__(self):
         super().__init__()
 
-        # fields define in unpack()
+        # fields defined in unpack as they are dynamic
 
     def unpack(self):
         # Dynamically build fields based on message length
