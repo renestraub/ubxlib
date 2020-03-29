@@ -34,16 +34,15 @@ msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
 msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
 """
 
+# Create UBX library
+ubx = GnssUBlox('/dev/ttyS3')
+ubx.setup()
 
-r = GnssUBlox('/dev/ttyS3')
-r.setup()
-
-ff = FrameFactory.getInstance()
-ff.register(UbxAckAck)
-ff.register(UbxMonVer)
-ff.register(UbxEsfStatus)
-ff.register(UbxUpdSos)
-ff.register(UbxCfgTp5)
+# Register the frame types we use
+ubx.register_frame(UbxMonVer)
+ubx.register_frame(UbxEsfStatus)
+ubx.register_frame(UbxUpdSos)
+ubx.register_frame(UbxCfgTp5)
 
 """
 # Remove backup
@@ -60,26 +59,26 @@ r.wait()
 """
 
 m = UbxMonVerPoll()
-res = r.poll(m)
+res = ubx.poll(m)
 print(res)
 
 m = UbxEsfStatusPoll()
-res = r.poll(m)
+res = ubx.poll(m)
 print(res)
 
 m = UbxCfgRstAction()
 m.cold_start()
 m.pack()
-# r.send(m)
+ubx.send(m)
 
-# quit()
+quit()
 
 for i in range(0, 1):
     print(f'***** {i} ***********************')
 
     logger.debug('getting SOS state')
     msg_upd_sos_poll = UbxUpdSosPoll()
-    res = r.poll(msg_upd_sos_poll)
+    res = ubx.poll(msg_upd_sos_poll)
     print(res)
     if res:
         print(f'SOS state is {res.f.response}')
@@ -90,7 +89,7 @@ for i in range(0, 1):
     msg_cfg_tp5_poll.pack()
     print(msg_cfg_tp5_poll)
     print(binascii.hexlify(msg_cfg_tp5_poll.to_bytes()))
-    res = r.poll(msg_cfg_tp5_poll)
+    res = ubx.poll(msg_cfg_tp5_poll)
     print(res)
 
     res.f.flags &= ~0x01
@@ -102,10 +101,10 @@ for i in range(0, 1):
     # print(res)
     res.pack()
 
-    r.expect(UbxAckAck.CID)
-    r.send(res)
-    r.wait()
+    ubx.expect(UbxAckAck.CID)
+    ubx.send(res)
+    ubx.wait()
 
     time.sleep(0.87)
 
-r.cleanup()
+ubx.cleanup()

@@ -6,9 +6,8 @@ import sys
 import threading
 import time
 
-from ubxlib.frame import UbxFrame
 from ubxlib.frame_factory import FrameFactory
-
+from ubxlib.frame import UbxFrame
 from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.parser import UbxParser
 
@@ -33,10 +32,15 @@ class GnssUBlox(threading.Thread):
         self.thread_ready_event = threading.Event()
         self.thread_stop_event = threading.Event()
 
+        self.frame_factory = FrameFactory.getInstance()
+
         self.wait_msg_class = -1
         self.wait_msg_id = -1
 
     def setup(self):
+        # Register ACK-ACK frame, as it's used internally by this module
+        self.frame_factory.register(UbxAckAck)
+
         # Start worker thread in daemon mode, will invoke run() method
         self.daemon = True
         self.start()
@@ -54,6 +58,9 @@ class GnssUBlox(threading.Thread):
         # Wait until thread ended
         self.join(timeout=1.0)
         logger.info('thread stopped')
+
+    def register_frame(self, frame_type):
+        self.frame_factory.register(frame_type)
 
     def poll(self, message):
         """
