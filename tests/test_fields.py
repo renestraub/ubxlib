@@ -1,7 +1,7 @@
 # import pytest
 
 from ubxlib.types import Fields
-from ubxlib.types import Padding, U1, I4
+from ubxlib.types import Padding, U1, I4, U4
 
 
 class TestFields:
@@ -45,15 +45,15 @@ class TestFields:
         u.add(I4('test'))
         u.add(U1('val'))
         u.add(Padding(3, 'res1'))
-        u.add(I4('test2'))
+        u.add(U4('test2'))
 
-        u.test = 0x98765432
+        u.test = 0x76543210
         u.val = 0xAF
         u.test2 = 0xcafebabe
 
         data = u.pack()
         print(data)
-        assert data == bytearray.fromhex('32 54 76 98 AF 00 00 00 be ba fe ca')
+        assert data == bytearray.fromhex('10 32 54 76 AF 00 00 00 be ba fe ca')
 
     def test_pack2(self):
         u = Fields()
@@ -61,12 +61,11 @@ class TestFields:
         u.add(U1('val'))
         u.add(Padding(2, 'res1'))
 
-        u.test = 0x98765432
+        u.test = 0x76543210
         u.val = 0xAF
-        u.test2 = 0xcafebabe
 
         data = u.pack()
-        assert data == bytearray.fromhex('32 54 76 98 AF 00 00')
+        assert data == bytearray.fromhex('10 32 54 76 AF 00 00')
 
     def test_unpack(self):
         # single U8
