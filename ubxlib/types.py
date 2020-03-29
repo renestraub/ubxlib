@@ -117,6 +117,13 @@ class X1(Item):
         super().__init__(name, value=0)
 
 
+class X2(Item):
+    fmt = 'H'
+
+    def __init__(self, name):
+        super().__init__(name, value=0)
+
+
 class X4(Item):
     fmt = 'I'
 

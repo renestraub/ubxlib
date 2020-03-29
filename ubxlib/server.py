@@ -156,6 +156,8 @@ class GnssUBlox(threading.Thread):
         - parses ubx frames, decodes them
         - if a frame is received it is put in the receive queue
         """
+        # TODO: State machine with reconnect features?
+
         try:
             logger.info('connecting to gpsd')
             self.listen_sock.connect(('127.0.0.1', 2947))

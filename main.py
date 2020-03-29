@@ -9,6 +9,7 @@ from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
 from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSosAction
 from ubxlib.ubx_mon_ver import UbxMonVerPoll
+from ubxlib.ubx_cfg_rst import UbxCfgRstAction
 from ubxlib.ubx_esf_status import UbxEsfStatusPoll
 
 
@@ -51,8 +52,14 @@ res = r.poll(m)
 print(res)
 
 m = UbxEsfStatusPoll()
-res = r.poll(m)
-print(res)
+#res = r.poll(m)
+#print(res)
+
+
+m = UbxCfgRstAction()
+m.cold_start()
+m.pack()
+# r.send(m)
 
 quit()
 
