@@ -5,21 +5,31 @@ from ubxlib.checksum import Checksum
 from ubxlib.types import U1
 from ubxlib.types import Fields
 
-
 logger = logging.getLogger('gnss_tool')
 
 
 class UbxCID(object):
     def __init__(self, cls, id):
         super().__init__()
-        self.cls = cls
-        self.id = id
+        self.__cls = cls
+        self.__id = id
 
-    def __eq__(self, value):
-        return self.cls == value.cls and self.id == value.id
+    @property
+    def cls(self):
+        return self.__cls
+
+    @property
+    def id(self):
+        return self.__id
+
+    def __eq__(self, other):
+        return self.__cls == other.__cls and self.__id == other.__id
 
     def __str__(self):
-        return f'cls:{self.cls:02x} id:{self.id:02x}'
+        return f'cls:{self.__cls:02x} id:{self.__id:02x}'
+
+    def __hash__(self):
+        return hash((self.__cls, self.__id))
 
 
 class UbxFrame(object):
