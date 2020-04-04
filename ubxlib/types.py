@@ -66,6 +66,16 @@ class CH(Item):
         super().__init__(name, value='')
         self.length = length
 
+    def pack(self):
+        """
+        Dedicated pack method for fixed-sized strings
+
+        Inserts 0x00 padding bytes
+        """
+        data = self.value.encode()
+        # TODO: Fill up string with 0es when shorter than field
+        return data[0:self.length]
+
     def unpack(self, data):
         """
         Dedicated unpack method for fixed-sized strings
@@ -92,8 +102,22 @@ class U1(Item):
         super().__init__(name, value=0)
 
 
+class U2(Item):
+    fmt = 'H'
+
+    def __init__(self, name):
+        super().__init__(name, value=0)
+
+
 class U4(Item):
     fmt = 'I'
+
+    def __init__(self, name):
+        super().__init__(name, value=0)
+
+
+class I1(Item):
+    fmt = 'b'
 
     def __init__(self, name):
         super().__init__(name, value=0)
