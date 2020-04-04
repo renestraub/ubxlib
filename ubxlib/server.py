@@ -76,6 +76,19 @@ class GnssUBlox(threading.Thread):
 
         return res
 
+    def set(self, message):
+        """
+        Send a set message to modem
+
+        - creates bytes representation of set frame
+        - send set message to modem
+        - waits for ACK
+        """
+        self.expect(UbxAckAck.CID)
+        message.pack()
+        self.send(message)
+        self.wait()
+
     def expect(self, cid):
         """
         Define message message to wait for
