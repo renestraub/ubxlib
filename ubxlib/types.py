@@ -33,7 +33,10 @@ class Item(object):
         return length
 
     def __str__(self):
-        return f'{self.name}: {self.value}'
+        if hasattr(self, 'fmt_string'):
+            return f'{self.name}: {self.value:{self.fmt_string}}'
+        else:
+            return f'{self.name}: {self.value}'
 
 
 class Padding(Item):
@@ -43,7 +46,7 @@ class Padding(Item):
 
     def pack(self):
         """
-        Dedicated unpack method for padding bytes
+        Dedicated pack method for padding bytes
 
         Inserts 0x00 padding bytes
         """
@@ -112,6 +115,7 @@ class I4(Item):
 
 class X1(Item):
     fmt = 'B'
+    fmt_string = '02x'
 
     def __init__(self, name):
         super().__init__(name, value=0)
@@ -119,6 +123,7 @@ class X1(Item):
 
 class X2(Item):
     fmt = 'H'
+    fmt_string = '04x'
 
     def __init__(self, name):
         super().__init__(name, value=0)
@@ -126,6 +131,7 @@ class X2(Item):
 
 class X4(Item):
     fmt = 'I'
+    fmt_string = '08x'
 
     def __init__(self, name):
         super().__init__(name, value=0)
