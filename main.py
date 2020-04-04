@@ -11,9 +11,14 @@ from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSos, UbxUpdSosAction
 from ubxlib.ubx_mon_ver import UbxMonVerPoll, UbxMonVer
 from ubxlib.ubx_cfg_rst import UbxCfgRstAction
 from ubxlib.ubx_esf_status import UbxEsfStatusPoll, UbxEsfStatus
+# from ubxlib.ubx_mga_ini_time_utc import UbxMgaIniTimeUtc
+from ubxlib.ubx_cfg_nmea import UbxCfgNmeaPoll, UbxCfgNmea
+from ubxlib.ubx_cfg_gnss import UbxCfgGnssPoll, UbxCfgGnss
+from ubxlib.ubx_cfg_nav5 import UbxCfgNav5Poll, UbxCfgNav5
+from ubxlib.ubx_cfg_esfalg import UbxCfgEsfAlgPoll, UbxCfgEsfAlg
+from ubxlib.ubx_esf_alg import UbxEsfAlgPoll, UbxEsfAlg, UbxEsfResetAlgAction
 
 from ubxlib.frame import UbxCID
-from ubxlib.frame_factory import FrameFactory
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -39,10 +44,18 @@ ubx = GnssUBlox('/dev/ttyS3')
 ubx.setup()
 
 # Register the frame types we use
-ubx.register_frame(UbxMonVer)
-ubx.register_frame(UbxEsfStatus)
+protocols = [UbxMonVer, UbxEsfStatus, UbxEsfAlg]
+for p in protocols:
+    ubx.register_frame(p)
+#ubx.register_frame(UbxMonVer)
+#ubx.register_frame(UbxEsfStatus)
 ubx.register_frame(UbxUpdSos)
 ubx.register_frame(UbxCfgTp5)
+ubx.register_frame(UbxCfgNmea)
+ubx.register_frame(UbxCfgGnss)
+ubx.register_frame(UbxCfgNav5)
+ubx.register_frame(UbxCfgEsfAlg)
+#ubx.register_frame(UbxEsfAlg)
 
 """
 # Remove backup
@@ -62,18 +75,78 @@ m = UbxMonVerPoll()
 res = ubx.poll(m)
 print(res)
 
+m = UbxCfgNmeaPoll()
+res = ubx.poll(m)
+print(res)
+
+"""
+res.f.nmeaVersion = 0x41
+res.pack()
+ubx.expect(UbxAckAck.CID)
+ubx.send(res)
+ubx.wait()
+"""
+
+m = UbxCfgNav5Poll()
+res = ubx.poll(m)
+print(res)
+res.f.dynModel = 4
+ubx.set(res)
+
+m = UbxCfgEsfAlgPoll()
+res = ubx.poll(m)
+print(res)
+# res.f.bitfield &= ~UbxCfgEsfAlg.BITFIELD_doAutoMntAlg
+res.f.bitfield |= UbxCfgEsfAlg.BITFIELD_doAutoMntAlg
+res.f.yaw = 999
+res.f.pitch = 888
+res.f.roll = 777
+ubx.set(res)
+
+m = UbxEsfResetAlgAction()
+ubx.set(m)
+
+m = UbxEsfAlgPoll()
+res = ubx.poll(m)
+print(res)
+
+#quit(0)
+
+"""
+m = UbxCfgGnssPoll()
+res = ubx.poll(m)
+print(res)
+#res.gps_glonass()
+res.gps_galileo_beidou()
+print(res)
+
+res.pack()
+ubx.expect(UbxAckAck.CID)
+ubx.send(res)
+ubx.wait()
+
+quit(0)
+"""
+
 m = UbxEsfStatusPoll()
 res = ubx.poll(m)
 print(res)
 
+"""
 m = UbxCfgRstAction()
 m.cold_start()
 m.pack()
 ubx.send(m)
 
-quit()
+m = UbxMgaIniTimeUtc()
+m.set_current_dt()
+m.pack()
+ubx.send(m)
+"""
 
-for i in range(0, 1):
+quit(0)
+
+for i in range(0, 10000):
     print(f'***** {i} ***********************')
 
     logger.debug('getting SOS state')
@@ -91,6 +164,8 @@ for i in range(0, 1):
     print(binascii.hexlify(msg_cfg_tp5_poll.to_bytes()))
     res = ubx.poll(msg_cfg_tp5_poll)
     print(res)
+    if i > 1:
+        assert res.f.pulseLenRatio == 500
 
     res.f.flags &= ~0x01
     # res.fields['flags'] = 1 + 2 + 16    # Active, lock to GPS, isLength
@@ -105,6 +180,10 @@ for i in range(0, 1):
     ubx.send(res)
     ubx.wait()
 
-    time.sleep(0.87)
+    time.sleep(1.87)
 
 ubx.cleanup()
+
+
+# TODO: ubx-cfg-nmea
+# TODO:  nmea version = 4.10
