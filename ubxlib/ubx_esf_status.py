@@ -25,8 +25,9 @@ class UbxEsfStatus(UbxEsfStatus_):
         self.f = Fields()
         self.f.add(U4('iTow'))
         self.f.add(U1('version'))
-        self.f.add(Padding(7, 'res1'))
-        self.f.add(U1('fusionMode'))
+        self.f.add(X1('initStatus'))
+        self.f.add(Padding(6, 'res1'))
+        self.f.add(U1('status'))
         self.f.add(Padding(2, 'res2'))
         self.f.add(U1('numSens'))
 
