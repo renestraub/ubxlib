@@ -2,9 +2,13 @@ from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.types import Padding, U1, I2, I4, X4
 
 
-class UbxCfgTp5Poll(UbxFrame):
+class UbxCfgTp5_(UbxFrame):
     CID = UbxCID(0x06, 0x31)
-    NAME = 'UBX-CFG-TP5-POLL'
+    NAME = 'UBX-CFG-TP5'
+
+
+class UbxCfgTp5Poll(UbxCfgTp5_):
+    NAME = UbxCfgTp5_.NAME + '-POLL'
 
     def __init__(self):
         super().__init__()
@@ -12,10 +16,7 @@ class UbxCfgTp5Poll(UbxFrame):
         self.f.add(U1('tpIdx'))
 
 
-class UbxCfgTp5(UbxFrame):
-    CID = UbxCID(0x06, 0x31)
-    NAME = 'UBX-CFG-TP5'
-
+class UbxCfgTp5(UbxCfgTp5_):
     def __init__(self):
         super().__init__()
 
