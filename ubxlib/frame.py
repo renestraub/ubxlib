@@ -2,12 +2,12 @@ import logging
 import struct
 
 from ubxlib.checksum import Checksum
-from ubxlib.types import U1
 from ubxlib.types import Fields
 
 logger = logging.getLogger('gnss_tool')
 
 
+# TODO: Refactor to dedicated module
 class UbxCID(object):
     def __init__(self, cls, id):
         super().__init__()
@@ -32,6 +32,9 @@ class UbxCID(object):
         return hash((self.__cls, self.__id))
 
 
+# TODO: Flag/State that shows whether frame is fully constructed and can be sent to module
+# TODO: True for Action Frames, which are typically small and have only a selector value
+# TODO: True for frames that have been constructed from a poll request
 class UbxFrame(object):
     CID = UbxCID(0, 0)
     NAME = 'UBX'
