@@ -2,11 +2,22 @@
 
 u-blox gnss modem library
 
-A more elaborate description will follow later.
+_A more elaborate description will follow later._
+
 
 ## Quick Start
 
-### Get Modem Versions
+Code samples can be found in the examples folder. Execute them from
+the project directory as modules.
+
+```python
+python3 -m examples.show_version
+```
+
+
+### Example - Get Modem Versions
+
+The following code is from `examples/show_version.py`.
 
 ```python
 #!/usr/bin/python3
