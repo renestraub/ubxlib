@@ -70,6 +70,7 @@ class GnssUBlox(threading.Thread):
         - waits for receiver message with same class/id as poll message
         """
         assert isinstance(message, UbxFrame)
+
         self.expect(message.CID)
         self.send(message)
         res = self.wait()
@@ -84,10 +85,14 @@ class GnssUBlox(threading.Thread):
         - send set message to modem
         - waits for ACK
         """
+        assert isinstance(message, UbxFrame)
+
         self.expect(UbxAckAck.CID)
         message.pack()
         self.send(message)
-        self.wait()
+        res = self.wait()
+
+        return res
 
     def expect(self, cid):
         """
