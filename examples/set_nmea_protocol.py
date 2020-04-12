@@ -8,7 +8,6 @@ python3 -m examples.set_nmea_protocol
 import logging
 
 from ubxlib.server import GnssUBlox
-from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_cfg_nmea import UbxCfgNmeaPoll, UbxCfgNmea
 
 
