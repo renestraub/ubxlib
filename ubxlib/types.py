@@ -175,6 +175,9 @@ class Fields(object):
         # Create named entry in dictionary for value
         self._fields[field.name] = field
 
+    def get(self, field):
+        return self._fields[field]
+
     def unpack(self, data):
         # print('unpacking from data')
         # print(f'data {data}')

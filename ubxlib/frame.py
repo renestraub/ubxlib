@@ -77,6 +77,9 @@ class UbxFrame(object):
 
         return msg
 
+    def get(self, name):
+        return self.f.get(name)
+
     def pack(self):
         self.data = self.f.pack()
 
