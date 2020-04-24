@@ -21,23 +21,12 @@ class UbxEsfAlg(UbxEsfAlg_):
         self.f = Fields()
         self.f.add(U4('iTow'))
         self.f.add(U1('version'))
-        self.f.add(X1('bitfield0'))
-        self.f.add(Padding(2, 'res1'))
-        self.f.add(I4('yaw'))      # 1e-1 -> more likely 1e-2
-        self.f.add(I2('pitch'))     # 1e-1
-        self.f.add(I2('roll'))       # 1e-1
-
-        # TODO: Check if properly documented.
-        # 30c74a22 01 00 0000 64000000 c800 2c01
-        # Does not report proper yaw, pitch, roll values when manually configured
-        # yaw displays roll
-        # pitch displays pitch
-        # roll displays 0 (yaw?)
-
-    def unpack(self):
-        import binascii
-        print(binascii.hexlify(self.data))
-        return super().unpack()
+        self.f.add(U1_Flags('flags'))
+        self.f.add(U1('error'))
+        self.f.add(Padding(1, 'res1'))
+        self.f.add(U4('yaw'))      # 1e-2, 0..+360
+        self.f.add(I2('pitch'))    # 1e-2, -90..+90
+        self.f.add(I2('roll'))     # 1e-2, -180..180
 
 
 class UbxEsfResetAlgAction(UbxFrame):
@@ -46,3 +35,29 @@ class UbxEsfResetAlgAction(UbxFrame):
 
     def __init__(self):
         super().__init__()
+
+
+class U1_Flags(U1):
+    status_strings = ['0: user defined/fixed angles', '1: roll/pitch alignment', '2: roll/pitch/yaw', 
+                      '3: coarse', '4: fine', '5', '6', '7']
+
+    def __init__(self, name):
+        super().__init__(name)
+
+        self.status = 0
+        self.autoMntAlgOn = 0
+
+    def unpack(self, data):
+        len = super().unpack(data)
+
+        self.status = (self.value >> 1) & 0x07
+        self.autoMntAlgOn = (self.value >> 0) & 0x01
+
+        return len
+
+    def __str__(self):
+        res = self.name + ': '
+        res += 'autoMntAlgn: '
+        res += 'on, ' if self.autoMntAlgOn == 1 else 'off, '
+        res += f'status: {U1_Flags.status_strings[self.status]}'
+        return res
