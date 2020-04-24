@@ -2,6 +2,38 @@ from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.types import Padding, U1, X2, X4, U4
 
 
+class UbxCfgPrt_(UbxFrame):
+    CID = UbxCID(0x06, 0x00)
+    NAME = 'UBX-CFG-PRT'
+
+    PORTID_Uart = 1
+
+
+class UbxCfgPrtPoll(UbxCfgPrt_):
+    NAME = UbxCfgPrt_.NAME + '-POLL'
+
+    def __init__(self):
+        super().__init__()
+
+        self.f.add(U1('PortId'))
+
+
+class UbxCfgPrtUart(UbxCfgPrt_):
+    def __init__(self):
+        super().__init__()
+
+        self.f.add(U1('PortId'))
+        self.f.add(Padding(1, 'res1'))
+        self.f.add(X2('txReady'))
+        self.f.add(X4_Mode('mode'))
+        self.f.add(U4('baudRate'))
+
+        self.f.add(X2_Proto('inProtoMask'))
+        self.f.add(X2_Proto('outProtoMask'))
+        self.f.add(X2('flags'))
+        self.f.add(Padding(2, 'res2'))
+
+
 class X2_Proto(X2):
     def __init__(self, name):
         super().__init__(name)
@@ -44,35 +76,3 @@ class X4_Mode(X4):
         res += f', {stopbits_str[stopbits]} stop bit(s)'
 
         return res
-
-
-class UbxCfgPrt_(UbxFrame):
-    CID = UbxCID(0x06, 0x00)
-    NAME = 'UBX-CFG-PRT'
-
-    PORTID_Uart = 1
-
-
-class UbxCfgPrtPoll(UbxCfgPrt_):
-    NAME = UbxCfgPrt_.NAME + '-POLL'
-
-    def __init__(self):
-        super().__init__()
-
-        self.f.add(U1('PortId'))
-
-
-class UbxCfgPrtUart(UbxCfgPrt_):
-    def __init__(self):
-        super().__init__()
-
-        self.f.add(U1('PortId'))
-        self.f.add(Padding(1, 'res1'))
-        self.f.add(X2('txReady'))
-        self.f.add(X4_Mode('mode'))
-        self.f.add(U4('baudRate'))
-
-        self.f.add(X2_Proto('inProtoMask'))
-        self.f.add(X2_Proto('outProtoMask'))
-        self.f.add(X2('flags'))
-        self.f.add(Padding(2, 'res2'))
