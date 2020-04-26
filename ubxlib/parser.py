@@ -1,9 +1,9 @@
 import logging
+import threading
 from enum import Enum
 
-from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.checksum import Checksum
-
+from ubxlib.frame import UbxCID, UbxFrame
 
 logger = logging.getLogger('gnss_tool')
 
@@ -41,6 +41,17 @@ class UbxParser(object):
 
         self._reset()
         self.state = __class__.State.INIT
+
+        self.wait_cid = None
+        self.wait_cid_lock = threading.Lock()
+
+    def clear_filter(self):
+        with self.wait_cid_lock:
+            self.wait_cid = None
+
+    def set_filter(self, cid):
+        with self.wait_cid_lock:
+            self.wait_cid = cid
 
     def process(self, data):
         for d in data:
@@ -92,10 +103,19 @@ class UbxParser(object):
             elif self.state == __class__.State.CRC2:
                 self.ckb = d
 
-                # if checksum matches received checksum put frame in receive queue
+                # if checksum matches received checksum ..
                 if self.checksum.matches(self.cka, self.ckb):
-                    # Send CID and data as tuple to server
-                    self.rx_queue.put((UbxCID(self.msg_class, self.msg_id), self.msg_data))
+                    # .. and frame passes filter ..
+                    cid = UbxCID(self.msg_class, self.msg_id)
+
+                    with self.wait_cid_lock:
+                        filter = self.wait_cid
+
+                    if filter and cid == filter:
+                        # .. send CID and data as tuple to server
+                        self.rx_queue.put((cid, self.msg_data))
+                    else:
+                        logger.debug(f'dropping {cid}')
                 else:
                     logger.warning(f'checksum error in frame, discarding')
 

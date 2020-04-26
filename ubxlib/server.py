@@ -33,9 +33,7 @@ class GnssUBlox(threading.Thread):
         self.thread_stop_event = threading.Event()
 
         self.frame_factory = FrameFactory.getInstance()
-
-        self.wait_msg_class = -1
-        self.wait_msg_id = -1
+        self.wait_cid = None
 
     def setup(self):
         # Register ACK-ACK frame, as it's used internally by this module
@@ -74,7 +72,6 @@ class GnssUBlox(threading.Thread):
         self.expect(message.CID)
         self.send(message)
         res = self.wait()
-
         return res
 
     def set(self, message):
@@ -100,6 +97,7 @@ class GnssUBlox(threading.Thread):
         """
         logger.debug(f'expecting {cid}')
         self.wait_cid = cid
+        self.parser.set_filter(cid)
 
     def send(self, ubx_message):
         try:
@@ -135,12 +133,14 @@ class GnssUBlox(threading.Thread):
     def wait(self, timeout=3.0):
         logger.debug(f'waiting {timeout}s for reponse from listener thread')
 
+        # TODO: Timeout loop required if we have queue.get() with timeout?
         time_end = time.time() + timeout
         while time.time() < time_end:
             try:
                 cid, data = self.response_queue.get(True, timeout)
                 logger.debug(f'got response {cid}')
 
+                # TODO; Required if parser already filters for us?
                 if cid == self.wait_cid:
                     logger.debug(f'received expected frame {cid}')
 
@@ -153,6 +153,7 @@ class GnssUBlox(threading.Thread):
                         logger.debug(f'default: {binascii.hexlify(data)}')
                         frame = UbxFrame()
 
+                    self.parser.clear_filter()
                     return frame
 
             except queue.Empty:
