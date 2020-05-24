@@ -39,8 +39,10 @@ msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
 """
 
 # Create UBX library
-ubx = GnssUBlox('/dev/ttyS3')
-ubx.setup()
+# ubx = GnssUBlox('/dev/ttyS3')
+ubx = GnssUBlox()
+ready = ubx.setup()
+assert ready
 
 # Register the frame types we use
 protocols = [UbxMonVer, UbxEsfStatus, UbxEsfAlg, UbxNavStatus]
@@ -114,8 +116,6 @@ ubx.set(m)
 m = UbxEsfAlgPoll()
 res = ubx.poll(m)
 print(res)
-
-#quit(0)
 
 """
 m = UbxCfgGnssPoll()
