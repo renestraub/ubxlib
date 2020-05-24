@@ -5,20 +5,19 @@ import logging
 import binascii
 
 from ubxlib.server import GnssUBlox
+from ubxlib.frame import UbxCID
 from ubxlib.ubx_ack import UbxAckAck
-from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll, UbxCfgTp5
-from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSos, UbxUpdSosAction
 from ubxlib.ubx_mon_ver import UbxMonVerPoll, UbxMonVer
+from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll, UbxCfgTp5
 from ubxlib.ubx_cfg_rst import UbxCfgRstAction
-from ubxlib.ubx_esf_status import UbxEsfStatusPoll, UbxEsfStatus
-# from ubxlib.ubx_mga_ini_time_utc import UbxMgaIniTimeUtc
 from ubxlib.ubx_cfg_nmea import UbxCfgNmeaPoll, UbxCfgNmea
 from ubxlib.ubx_cfg_gnss import UbxCfgGnssPoll, UbxCfgGnss
 from ubxlib.ubx_cfg_nav5 import UbxCfgNav5Poll, UbxCfgNav5
 from ubxlib.ubx_cfg_esfalg import UbxCfgEsfAlgPoll, UbxCfgEsfAlg
+from ubxlib.ubx_nav_status import UbxNavStatusPoll, UbxNavStatus
+from ubxlib.ubx_esf_status import UbxEsfStatusPoll, UbxEsfStatus
 from ubxlib.ubx_esf_alg import UbxEsfAlgPoll, UbxEsfAlg, UbxEsfResetAlgAction
-
-from ubxlib.frame import UbxCID
+from ubxlib.ubx_upd_sos import UbxUpdSosPoll, UbxUpdSos, UbxUpdSosAction
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -44,7 +43,7 @@ ubx = GnssUBlox('/dev/ttyS3')
 ubx.setup()
 
 # Register the frame types we use
-protocols = [UbxMonVer, UbxEsfStatus, UbxEsfAlg]
+protocols = [UbxMonVer, UbxEsfStatus, UbxEsfAlg, UbxNavStatus]
 for p in protocols:
     ubx.register_frame(p)
 #ubx.register_frame(UbxMonVer)
@@ -87,12 +86,15 @@ ubx.send(res)
 ubx.wait()
 """
 
+"""
 m = UbxCfgNav5Poll()
 res = ubx.poll(m)
 print(res)
 res.f.dynModel = 4
 ubx.set(res)
+"""
 
+"""
 m = UbxCfgEsfAlgPoll()
 res = ubx.poll(m)
 print(res)
@@ -102,9 +104,12 @@ res.f.yaw = 999
 res.f.pitch = 888
 res.f.roll = 777
 ubx.set(res)
+"""
 
+"""
 m = UbxEsfResetAlgAction()
 ubx.set(m)
+"""
 
 m = UbxEsfAlgPoll()
 res = ubx.poll(m)
@@ -129,6 +134,10 @@ quit(0)
 """
 
 m = UbxEsfStatusPoll()
+res = ubx.poll(m)
+print(res)
+
+m = UbxNavStatusPoll()
 res = ubx.poll(m)
 print(res)
 
