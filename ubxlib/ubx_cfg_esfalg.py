@@ -21,6 +21,10 @@ class UbxCfgEsfAlg(UbxCfgEsfAlg_):
         super().__init__()
 
         self.f.add(X4('bitfield'))  # u-blox describes as U4, bit is X4
-        self.f.add(U4('yaw'))       # 1e-2
-        self.f.add(I2('pitch'))     # 1e-2
-        self.f.add(I2('roll'))      # 1e-2
+        self.f.add(U4('yaw'))       # 1e-2, 0..360°
+        self.f.add(I2('pitch'))     # 1e-2, -90..90°
+        self.f.add(I2('roll'))      # 1e-2, -180..180°
+
+    # TODO:
+    # def enableAutoAlignment()
+    # def disableAutoAlignment()
