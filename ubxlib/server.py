@@ -8,7 +8,7 @@ import time
 import json
 
 from ubxlib.frame_factory import FrameFactory
-from ubxlib.frame import UbxFrame
+from ubxlib.frame import UbxFrame, UbxCID
 from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.parser import UbxParser
 
@@ -37,6 +37,8 @@ class GnssUBlox(threading.Thread):
 
         self.frame_factory = FrameFactory.getInstance()
         self.wait_cid = None
+        self.gpsd_errors = 0
+        self.cid_error = UbxCID(0x00, 0x01)
 
     def setup(self):
         # Register ACK-ACK frame, as it's used internally by this module
@@ -138,6 +140,18 @@ class GnssUBlox(threading.Thread):
             response = data.decode().strip()
             logger.debug(f'response: {response}')
 
+            if 'ERROR' in response:
+                self.gpsd_errors += 1
+                logger.warning(f'command not accepted by gpsd, {self.gpsd_errors} error(s)')
+
+                # Report error to waiting client, so it does not block
+                # Use custom CID not used by u-blox, if there was someting
+                # like UBX-ACK-TIMEOUT we would use that.
+                # TODO: Consider UBX-ACK-NAK ..
+                self.response_queue.put((self.cid_error, None))
+            else:
+                self.gpsd_errors = 0
+
             # TODO: check why we need to close socket here...
             self.control_sock.close()
 
@@ -154,8 +168,14 @@ class GnssUBlox(threading.Thread):
                 cid, data = self.response_queue.get(True, timeout)
                 logger.debug(f'got response {cid}')
 
+                if cid == self.cid_error:
+                    logger.warning('error response, no frame available')
+
+                    self.parser.clear_filter()
+                    return None
+
                 # TODO; Required if parser already filters for us?
-                if cid == self.wait_cid:
+                elif cid == self.wait_cid:
                     logger.debug(f'received expected frame {cid}')
 
                     ff = FrameFactory.getInstance()
