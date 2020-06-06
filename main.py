@@ -9,6 +9,7 @@ from ubxlib.frame import UbxCID
 from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_mon_ver import UbxMonVerPoll, UbxMonVer
 from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll, UbxCfgTp5
+from ubxlib.ubx_cfg_cfg import UbxCfgCfgAction
 from ubxlib.ubx_cfg_rst import UbxCfgRstAction
 from ubxlib.ubx_cfg_nmea import UbxCfgNmeaPoll, UbxCfgNmea
 from ubxlib.ubx_cfg_gnss import UbxCfgGnssPoll, UbxCfgGnss
@@ -27,15 +28,8 @@ logger.setLevel(logging.DEBUG)
 
 
 """
-msg_stop = bytearray.fromhex('06 04 04 00 00 00 08 00')    # stop
 msg_cfg_port_poll = bytearray.fromhex('06 00 01 00 01')  # UBX-CFG-PRT poll
 msg_nav_status_poll = bytearray.fromhex('01 03 00 00')
-
-# msg_cfg_port_uart_9600 = bytearray.fromhex('06 00 14 00 01 00 00 00 c0 08 00 00 80 25 00 00 07 00 01 00 00 00 00 00')
-msg_cfg_port_uart_115200 = bytearray.fromhex('06 00 14 00 01 00 00 00 c0 08 00 00 00 c2 01 00 07 00 01 00 00 00 00 00')
-
-msg_upd_sos_save = bytearray.fromhex('09 14 04 00 00 00 00 00')
-msg_upd_sos_clear = bytearray.fromhex('09 14 04 00 01 00 00 00')
 """
 
 # Create UBX library
@@ -48,6 +42,7 @@ assert ready
 protocols = [UbxMonVer, UbxEsfStatus, UbxEsfAlg, UbxNavStatus]
 for p in protocols:
     ubx.register_frame(p)
+
 #ubx.register_frame(UbxMonVer)
 #ubx.register_frame(UbxEsfStatus)
 ubx.register_frame(UbxUpdSos)
@@ -72,6 +67,20 @@ r.send(m)
 r.wait()
 """
 
+"""
+m = UbxCfgRstAction()
+m.stop()
+m.pack()
+ubx.send(m)
+
+time.sleep(2.5)
+
+m = UbxCfgRstAction()
+m.start()
+m.pack()
+ubx.send(m)
+"""
+
 m = UbxMonVerPoll()
 res = ubx.poll(m)
 print(res)
@@ -84,8 +93,18 @@ print(res)
 res.f.nmeaVersion = 0x41
 res.pack()
 ubx.expect(UbxAckAck.CID)
-ubx.send(res)
-ubx.wait()
+ubx.set(res)
+"""
+
+"""
+m = UbxCfgCfgAction()
+m.save(UbxCfgCfgAction.MASK_NavConf)    # To save CFG-NAV-NMEA
+ubx.set(m)
+
+# Factory reset NAV config
+m = UbxCfgCfgAction()
+m.reset(UbxCfgCfgAction.MASK_NavConf)    # To save CFG-NAV-NMEA
+ubx.set(m)
 """
 
 """
