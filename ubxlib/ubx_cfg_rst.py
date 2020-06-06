@@ -40,3 +40,11 @@ class UbxCfgRstAction(UbxCfgRst_):
     def cold_start(self):
         self.f.resetMode = UbxCfgRstAction.SW_RESET
         self.f.navBbrMask = UbxCfgRstAction.COLD_START
+
+    def start(self):
+        self.f.resetMode = UbxCfgRstAction.START
+        self.f.navBbrMask = UbxCfgRstAction.HOT_START
+
+    def stop(self):
+        self.f.resetMode = UbxCfgRstAction.STOP
+        self.f.navBbrMask = UbxCfgRstAction.HOT_START
