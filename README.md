@@ -38,9 +38,7 @@ logger.setLevel(logging.INFO)
 
 
 # Create UBX library
-# Note: tty is only used to address modem in gpsd.
-#       the library does not use the tty directly
-ubx = GnssUBlox('/dev/ttyS3')
+ubx = GnssUBlox()
 ubx.setup()
 
 # Register the frame types we use
