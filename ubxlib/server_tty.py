@@ -221,34 +221,40 @@ class GnssUBloxBitrate:
             ser = Serial(self.device_name, timeout=0.1, baudrate=b)
             ser.reset_input_buffer()
 
-            data_raw = bytes()
-            data_nmea = ''
+            data_bin = bytes()
+            data_ascii = ''
 
             # Without further configuration a set of data is sent once per second.
             # 15 loops with a 0.1 sec read timeout is therefore enough for a decision
             for _ in range(15):
                 data = ser.read(1024)
-                data_raw += data
 
-                # Disregard conversion errors when binary data or garbage is received
-                nmea = ''
+                # Just add new data to binary buffer
+                data_bin += data
+
+                # For ASCII its a bit more complicated, we need to decode the bytes
+                # buffer from ser.read()
+                # If binary data or dummy bytes are received this will lead to a 
+                # Unicode conversion error we have to catch.
                 try:
-                    nmea = data_raw.decode()
-                    data_nmea += nmea
+                    ascii_str = data.decode()
+                    # We only get here if ascii_str is valid, we can the add it to
+                    # the ascii data stream. If there is a conversion error the
+                    # new data is dropped
+                    data_ascii += ascii_str
                 except UnicodeError:
-                    # Unicode conversion errors are expected here
-                    pass
+                    logger.debug("unicode conversion issue, dropping buffer")
 
-                logger.debug(f'bin: {binascii.hexlify(data_raw)}, ascii: {nmea}')
+                logger.debug(f'bin: {binascii.hexlify(data_bin)}, ascii: {data_ascii}')
 
                 # Check for NMEA frames (ASCII)
-                if 'GGA' in data_nmea:
-                    logger.info(f'nmea sentence detected at {b} bps')
+                if 'GGA,' in data_ascii or 'GSV,' in data_ascii or 'GGL,' in data_ascii or 'RMC,' in data_ascii:
+                    logger.info('nmea sentence detected')
                     self.baudrate = b
                     break
                 # Check for ubx frames
-                elif bytes.fromhex('B562') in data_raw:
-                    logger.info(f'ubx frame detected at {b} bps')
+                elif bytes.fromhex('B562') in data_bin:
+                    logger.info('ubx frame detected')
                     self.baudrate = b
                     break
 
