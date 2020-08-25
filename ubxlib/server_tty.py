@@ -192,8 +192,8 @@ class GnssUBlox(threading.Thread):
                 data = self.serial_port.read(1024)
                 if data:
                     self.parser.process(data)
-            except Serial.timeout:
-                pass
+            except SerialException as msg:
+                logger.warning(msg)
 
         self.enabled = False
 
