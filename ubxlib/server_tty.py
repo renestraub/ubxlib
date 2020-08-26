@@ -234,7 +234,7 @@ class GnssUBloxBitrate:
 
                 # For ASCII its a bit more complicated, we need to decode the bytes
                 # buffer from ser.read()
-                # If binary data or dummy bytes are received this will lead to a 
+                # If binary data or dummy bytes are received this will lead to a
                 # Unicode conversion error we have to catch.
                 try:
                     ascii_str = data.decode()
@@ -257,6 +257,9 @@ class GnssUBloxBitrate:
                     logger.info('ubx frame detected')
                     self.baudrate = b
                     break
+
+            ser.close()
+            ser = None
 
             if self.baudrate:
                 logger.info(f"current bitrate of GNSS is {b}")
