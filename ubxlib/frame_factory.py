@@ -26,20 +26,22 @@ class FrameFactory(object):
         self.__frames = dict()
 
     def register(self, frame_class):
-        # print(f'frame factory register {self.__instance}')
-        # print(frame_class)
-        # print(frame_class.CID)
         x = frame_class()
-        # print(x)
+
+        # Registering the same frame class multiple times is considered
+        # bad style. For now we just ignore the call. Future versions
+        # will assert.
+        if frame_class.CID in self.__frames:
+            # assert False
+            return
+
         self.__frames[frame_class.CID] = frame_class
-        # print(self.__frames)
 
     def build(self, cid):
         """
         Constructs an empty frame of the desired type
         """
         frame_type = self.__frames[cid]
-        # print(frame_type)
         frame = frame_type()
         return frame
 
