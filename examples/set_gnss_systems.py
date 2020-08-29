@@ -33,16 +33,19 @@ res = ubx.poll(poll_nmea_cfg)
 print(res)
 
 # Change the GNSS systems
+# res.gps_glonass()
 res.gps_galileo_beidou()
 
+####
 # By adding the following line an incorrect system constellation is selected
 # The receiver will reject this request with a NAK
 # res.enable_gnss(UbxCfgGnss.GNSS_GLONASS)
+####
 
 # Send command to modem, result is ack_nak from modem
 ack_nak = ubx.set(res)
 if ack_nak:
-    print(ack_nak)      # Just print result, could also check for ACK-ACK CID
+    print(ack_nak)
 else:
     print('Some sort of error happened')
 

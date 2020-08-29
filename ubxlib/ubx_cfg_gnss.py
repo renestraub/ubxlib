@@ -22,7 +22,7 @@ class UbxCfgGnss(UbxCfgGnss_):
     GNSS_Galileo = 2    # European
     GNSS_BeiDou = 3     # Chinese
     GNSS_IMES = 4       # Japanese Indoor System
-    GNSS_GZSS = 5       # Japanse, Focus Japan, also Australia
+    GNSS_QZSS = 5       # Japanse, Focus Japan, also Australia
     GNSS_GLONASS = 6    # Russian
     GNSS_IRNSS = 7      # Indian, not (yet) supported on NEO-M8
 
@@ -51,11 +51,11 @@ class UbxCfgGnss(UbxCfgGnss_):
 
         # TODO: check nested fields -> unit test
         for i in range(self.f.numConfigBlocks):
-            self.f.add(U1(f'gnssId_{i}'))
+            self.f.add(U1_GnssId(f'gnssId_{i}'))
             self.f.add(U1(f'resTrkCh_{i}'))
             self.f.add(U1(f'maxTrkCh_{i}'))
             self.f.add(Padding(1, f'res1_{i}'))
-            self.f.add(X4(f'flags_{i}'))    # Bit 0: enable
+            self.f.add(X4_Flags(f'flags_{i}'))
 
         super().unpack()
 
@@ -67,7 +67,7 @@ class UbxCfgGnss(UbxCfgGnss_):
         self.disable_gnss(UbxCfgGnss.GNSS_Galileo)
         self.disable_gnss(UbxCfgGnss.GNSS_BeiDou)
         self.disable_gnss(UbxCfgGnss.GNSS_IMES)
-        self.disable_gnss(UbxCfgGnss.GNSS_GZSS)
+        self.disable_gnss(UbxCfgGnss.GNSS_QZSS)
         # self.disable_gnss(UbxCfgGnss.GNSS_IRNSS)
 
     def gps_galileo_beidou(self):
@@ -77,26 +77,62 @@ class UbxCfgGnss(UbxCfgGnss_):
         self.enable_gnss(UbxCfgGnss.GNSS_BeiDou)
 
         self.disable_gnss(UbxCfgGnss.GNSS_IMES)
-        self.disable_gnss(UbxCfgGnss.GNSS_GZSS)
+        self.disable_gnss(UbxCfgGnss.GNSS_QZSS)
         self.disable_gnss(UbxCfgGnss.GNSS_GLONASS)
         # self.disable_gnss(UbxCfgGnss.GNSS_IRNSS)
 
     def enable_gnss(self, system):
-        assert 0 <= system <= 7
-        # TODO: Do not assume system == field entry, rather
-        # lookup gnssId
-        field = f'flags_{system}'
-        flag = self.f._fields[field].value
-        # print(f'{flag:08x}')
-        flag |= 1
-        self.f._fields[field].value = flag
+        assert 0 <= system <= UbxCfgGnss.GNSS_IRNSS
+        pos = self._find_entry(system)
+        if pos:
+            field = f'flags_{system}'
+            self.f._fields[field].enable()
 
     def disable_gnss(self, system):
-        assert 0 <= system <= 7
-        # TODO: Do not assume system == field entry, rather
-        # lookup gnssId
-        field = f'flags_{system}'
-        flag = self.f._fields[field].value
-        # print(f'{flag:08x}')
-        flag &= ~1
-        self.f._fields[field].value = flag
+        assert 0 <= system <= UbxCfgGnss.GNSS_IRNSS
+        pos = self._find_entry(system)
+        if pos:
+            field = f'flags_{system}'
+            self.f._fields[field].disable()
+
+    def _find_entry(self, system):
+        assert 0 <= system <= UbxCfgGnss.GNSS_IRNSS
+
+        for i in range(self.f.numConfigBlocks):
+            field_name = f'gnssId_{i}'
+            field = self.f.get(field_name)
+            if field.value == system:
+                return i
+
+
+class U1_GnssId(U1):
+    gnss_system_names = ['gps', 'sbas', 'galileo', 'beidou', 'imes', 'qzss', 'glonass', 'irnss']
+
+    def __init__(self, name):
+        super().__init__(name)
+
+    def __str__(self):
+        res = self.name + ': '
+        if self.value < len(U1_GnssId.gnss_system_names):
+            res += U1_GnssId.gnss_system_names[self.value]
+        else:
+            res += '<invalid>'
+        return res
+
+
+class X4_Flags(X4):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def enable(self):
+        self.value |= 0x1
+
+    def disable(self):
+        self.value &= ~0x1
+
+    def __str__(self):
+        enabled = (self.value >> 0) & 0x1
+
+        res = self.name + ': '
+        res += 'enabled' if enabled else 'disabled'
+        return res
