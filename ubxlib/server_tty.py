@@ -40,6 +40,7 @@ class GnssUBlox(threading.Thread):
     def setup(self):
         # Register ACK-ACK frame, as it's used internally by this module
         self.frame_factory.register(UbxAckAck)
+        self.frame_factory.register(UbxAckNak)
 
         # Start worker thread in daemon mode, will invoke run() method
         self.daemon = True
@@ -78,7 +79,7 @@ class GnssUBlox(threading.Thread):
         self.expect(message.CID)
         self.send(message)
         res = self.wait()
-        return res
+        return self._check_poll(message, res)
 
     def set(self, message):
         """
@@ -86,24 +87,32 @@ class GnssUBlox(threading.Thread):
 
         - creates bytes representation of set frame
         - send set message to modem
-        - waits for ACK
+        - waits for ACK/NAK
         """
         assert isinstance(message, UbxFrame)
 
-        self.expect(UbxAckAck.CID)
         message.pack()
+        self.expect([UbxAckAck.CID, UbxAckNak.CID])
         self.send(message)
         res = self.wait()
+        return self._check_ack_nak(message, res)
 
-        return res
-
+    """
+    Private methods
+    """
     def expect(self, cid):
         """
-        Define message message to wait for
+        Define message to wait for
+        Can be a single CID or a list of CIDs
         """
-        logger.debug(f'expecting {cid}')
+        if not isinstance(cid, list):
+            cid = [cid]
+
         self.wait_cid = cid
-        self.parser.set_filter(cid)
+        for cid in self.wait_cid:
+            logger.debug(f'expecting {cid}')
+
+        self.parser.set_filter(self.wait_cid)
 
     def send(self, ubx_message):
         assert self.enabled
@@ -146,8 +155,8 @@ class GnssUBlox(threading.Thread):
                     self.parser.clear_filter()
                     return None
 
-                # TODO; Required if parser already filters for us?
-                elif cid == self.wait_cid:
+                # TODO: Required if parser already filters for us?
+                elif cid in self.wait_cid:
                     logger.debug(f'received expected frame {cid}')
 
                     ff = FrameFactory.getInstance()
@@ -156,7 +165,7 @@ class GnssUBlox(threading.Thread):
 
                     except KeyError:
                         # If we can't parse the frame, return as is
-                        logger.debug(f'default: {binascii.hexlify(data)}')
+                        logger.debug(f'frame not registered, cannot decode: {binascii.hexlify(data)}')
                         frame = UbxFrame()
 
                     self.parser.clear_filter()
@@ -164,6 +173,32 @@ class GnssUBlox(threading.Thread):
 
             except queue.Empty:
                 logger.warning('timeout...')
+
+    def _check_poll(self, request, res):
+        if res:
+            if res.CID == request.CID:
+                logger.debug('ACK matches request')
+                return res
+            else:
+                # Must never happen, as one request is in expected list
+                logger.error(f'invalid frame received {res.CID}')
+                assert False
+
+    def _check_ack_nak(self, request, res):
+        if res:
+            if res.CID == UbxAckAck.CID:
+                ack_cid = UbxCID(res.f.clsId, res.f.msgId)
+                if ack_cid == request.CID:
+                    logger.debug('ACK matches request')
+                    return res
+                else:
+                    logger.warning(f'ACK {ack_cid} does not match request {request.CID}')
+            elif res.CID == UbxAckNak.CID:
+                logger.debug(f'request {request.CID} rejected, NAK received')
+            else:
+                # Must never happen. Only ACK/NAK in expected list
+                logger.error(f'invalid frame received {res.CID}')
+                assert False
 
     def run(self):
         """
