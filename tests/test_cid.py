@@ -1,6 +1,7 @@
 import pytest
 
-from ubxlib.frame import UbxCID
+from ubxlib.cid import UbxCID
+
 
 class TestCID:
     def test_creation(self):

@@ -1,4 +1,5 @@
-from ubxlib.frame import UbxFrame, UbxCID
+from ubxlib.cid import UbxCID
+from ubxlib.frame import UbxFrame
 from ubxlib.types import Fields, Padding, X1, U1, U4
 
 
@@ -138,6 +139,7 @@ class X1_SensStatus1(X1):
         return len
 
     def __str__(self):
+        # TODO: Why f-string
         res = self.name + f': '
         if self.type < len(X1_SensStatus1.sensor_types):
             res += f'{X1_SensStatus1.sensor_types[self.type]}, '
