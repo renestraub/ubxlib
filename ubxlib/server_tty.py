@@ -174,11 +174,15 @@ class GnssUBlox(threading.Thread):
         """
         try:
             logger.info(f'connecting to {self.device_name} at {self.baudrate} bps')
+
             self.serial_port = Serial(self.device_name, timeout=0.1, baudrate=self.baudrate)
+            assert self.serial_port
 
             logger.debug('starting listener on tty')
-            self.thread_ready_event.set()
             self._main_loop()
+
+            self.serial_port.close()
+            self.serial_port = None
 
             logger.debug('receiver done')
 
@@ -186,9 +190,14 @@ class GnssUBlox(threading.Thread):
             logger.error(msg)
 
     def _main_loop(self):
-        self.enabled = True
+        logger.info('starting listener on tty')
+
         while not self.thread_stop_event.is_set():
             try:
+                if not self.enabled:
+                    self.enabled = True
+                    self.thread_ready_event.set()
+
                 data = self.serial_port.read(1024)
                 if data:
                     self.parser.process(data)
