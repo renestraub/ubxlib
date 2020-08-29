@@ -14,7 +14,7 @@ from ubxlib.frame_factory import FrameFactory
 from ubxlib.parser import UbxParser
 from ubxlib.ubx_ack import UbxAckAck, UbxAckNak
 
-logger = logging.getLogger('gnss_tool')
+logger = logging.getLogger(__name__)
 
 
 # TODO: Factor out code shared with server.py and create baseclass

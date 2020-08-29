@@ -1,11 +1,8 @@
-import logging
 import struct
 
 from ubxlib.checksum import Checksum
 from ubxlib.cid import UbxCID
 from ubxlib.types import Fields
-
-logger = logging.getLogger('gnss_tool')
 
 
 # TODO: Flag/State that shows whether frame is fully constructed and can be sent to module

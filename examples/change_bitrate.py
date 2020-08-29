@@ -21,10 +21,9 @@ TTY = '/dev/ttyS3'
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
-logger = logging.getLogger('gnss_tool')
+logger = logging.getLogger('ubxlib')
 # logger.setLevel(logging.DEBUG)
-# logger.setLevel(logging.INFO)
-logger.setLevel(logging.WARNING)
+logger.setLevel(logging.INFO)
 
 
 # Check current bitrate of modem

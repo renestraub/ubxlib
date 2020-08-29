@@ -22,7 +22,7 @@ from ubxlib.ubx_upd_sos import UbxUpdSos, UbxUpdSosAction, UbxUpdSosPoll
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
-logger = logging.getLogger('gnss_tool')
+logger = logging.getLogger('ubxlib')
 logger.setLevel(logging.DEBUG)
 
 

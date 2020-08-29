@@ -13,7 +13,7 @@ from ubxlib.ubx_cfg_nmea import UbxCfgNmeaPoll, UbxCfgNmea
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
-logger = logging.getLogger('gnss_tool')
+logger = logging.getLogger('ubxlib')
 logger.setLevel(logging.INFO)
 # logger.setLevel(logging.DEBUG)
 

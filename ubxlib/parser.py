@@ -6,7 +6,7 @@ from ubxlib.checksum import Checksum
 from ubxlib.cid import UbxCID
 from ubxlib.frame import UbxFrame
 
-logger = logging.getLogger('gnss_tool')
+logger = logging.getLogger(__name__)
 
 
 class UbxParser(object):
