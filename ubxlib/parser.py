@@ -118,7 +118,8 @@ class UbxParser(object):
                             message = (cid, self.msg_data)
                             self.rx_queue.put(message)
                         else:
-                            logger.debug(f'no match - dropping {cid}')
+                            if logger.isEnabledFor(logging.DEBUG):
+                                logger.debug(f'no match - dropping {cid}')
                         
                         """
                         for filter in filters:
@@ -129,7 +130,8 @@ class UbxParser(object):
                                 break
                         """
                     else:
-                        logger.debug(f'no filters - dropping {cid}')
+                        if logger.isEnabledFor(logging.DEBUG):
+                            logger.debug(f'no filters - dropping {cid}')
                 else:
                     logger.warning(f'checksum error in frame, discarding')
 
