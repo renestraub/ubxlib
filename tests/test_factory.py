@@ -55,4 +55,17 @@ class TestFactory:
     def test_construct_unkown_frame(self, frame_factory):
         with pytest.raises(KeyError):
             data = bytearray.fromhex('11 22')
-            f = frame_factory.build_with_data(UbxAckAck.CID, data)
+            frame_factory.build_with_data(UbxAckAck.CID, data)
+
+    def test_only_prototype_classes_can_be_registered(self, frame_factory):
+        ack = UbxAckAck()
+        with pytest.raises(Exception):
+            frame_factory.register(ack)
+
+    def test_throws_when_unknown_frame_shall_be_built(self, frame_factory):
+        unregistered_cid = UbxCID(0xCA, 0xFE)
+        with pytest.raises(KeyError):
+            frame_factory.build(unregistered_cid)
+
+        with pytest.raises(KeyError):
+            frame_factory.build_with_data(unregistered_cid, "12345")
