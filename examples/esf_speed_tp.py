@@ -1,4 +1,3 @@
- 
 #!/usr/bin/python3
 """
 Sample code to send speed information to modem
