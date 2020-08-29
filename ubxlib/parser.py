@@ -3,7 +3,8 @@ import threading
 from enum import Enum
 
 from ubxlib.checksum import Checksum
-from ubxlib.frame import UbxCID, UbxFrame
+from ubxlib.cid import UbxCID
+from ubxlib.frame import UbxFrame
 
 logger = logging.getLogger('gnss_tool')
 
@@ -42,16 +43,16 @@ class UbxParser(object):
         self._reset()
         self.state = __class__.State.INIT
 
-        self.wait_cid = None
+        self.wait_cids = None
         self.wait_cid_lock = threading.Lock()
 
     def clear_filter(self):
         with self.wait_cid_lock:
-            self.wait_cid = None
+            self.wait_cids = None
 
     def set_filter(self, cid):
         with self.wait_cid_lock:
-            self.wait_cid = cid
+            self.wait_cids = cid
 
     def process(self, data):
         for d in data:
@@ -105,17 +106,30 @@ class UbxParser(object):
 
                 # if checksum matches received checksum ..
                 if self.checksum.matches(self.cka, self.ckb):
-                    # .. and frame passes filter ..
+                    # .. and frame passes filter(s) ..
                     cid = UbxCID(self.msg_class, self.msg_id)
 
                     with self.wait_cid_lock:
-                        filter = self.wait_cid
+                        filters = self.wait_cids
 
-                    if filter and cid == filter:
-                        # .. send CID and data as tuple to server
-                        self.rx_queue.put((cid, self.msg_data))
+                    if filters:
+                        if cid in filters:
+                            # .. send CID and data as tuple to server
+                            message = (cid, self.msg_data)
+                            self.rx_queue.put(message)
+                        else:
+                            logger.debug(f'no match - dropping {cid}')
+                        
+                        """
+                        for filter in filters:
+                            if filter and cid == filter:
+                                # .. send CID and data as tuple to server
+                                message = (cid, self.msg_data)
+                                self.rx_queue.put(message)
+                                break
+                        """
                     else:
-                        logger.debug(f'dropping {cid}')
+                        logger.debug(f'no filters - dropping {cid}')
                 else:
                     logger.warning(f'checksum error in frame, discarding')
 

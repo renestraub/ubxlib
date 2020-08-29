@@ -8,13 +8,14 @@ import time
 from serial import Serial
 from serial.serialutil import SerialException
 
+from ubxlib.cid import UbxCID
+from ubxlib.frame import UbxFrame
 from ubxlib.frame_factory import FrameFactory
-from ubxlib.frame import UbxFrame, UbxCID
-from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.parser import UbxParser
-
+from ubxlib.ubx_ack import UbxAckAck, UbxAckNak
 
 logger = logging.getLogger('gnss_tool')
+
 
 # TODO: Factor out code shared with server.py and create baseclass
 class GnssUBlox(threading.Thread):

@@ -1,7 +1,7 @@
 import pytest
 
+from ubxlib.cid import UbxCID
 from ubxlib.frame_factory import FrameFactory
-from ubxlib.frame import UbxCID
 from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_mon_ver import UbxMonVer
 
