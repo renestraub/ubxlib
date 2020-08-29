@@ -16,8 +16,9 @@ from ubxlib.ubx_cfg_esfla import UbxCfgEsflaPoll, UbxCfgEsfla, UbxCfgEsflaSet
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('gnss_tool')
-# logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+# logger.setLevel(logging.DEBUG)
+
 
 # Create UBX library
 ubx = GnssUBlox()

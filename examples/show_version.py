@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 """
 Simple demonstrator that gets modem version
+
+Run as module from project root:
+python3 -m examples.show_version
 """
 import logging
 
@@ -16,9 +19,7 @@ logger.setLevel(logging.INFO)
 
 
 # Create UBX library
-# Note: tty is only used to address modem in gpsd.
-#       the library does not use the tty directly
-ubx = GnssUBlox('/dev/ttyS3')
+ubx = GnssUBlox()
 ubx.setup()
 
 # Register the frame types we use

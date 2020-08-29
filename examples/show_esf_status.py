@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 """
 Shows status of extended sensor fusion
+
+Run as module from project root:
+python3 -m examples.show_esf_status
 """
 import logging
 import time
@@ -17,9 +20,7 @@ logger.setLevel(logging.INFO)
 
 
 # Create UBX library
-# Note: tty is only used to address modem in gpsd.
-#       the library does not use the tty directly
-ubx = GnssUBlox('/dev/ttyS3')
+ubx = GnssUBlox()
 ubx.setup()
 
 # Register the frame types we use

@@ -14,8 +14,9 @@ from ubxlib.ubx_cfg_rate import UbxCfgRatePoll, UbxCfgRate
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('gnss_tool')
-# logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+#logger.setLevel(logging.DEBUG)
+
 
 rate = int(input('Please enter desired rate in Hz (1..5): '))
 assert 1 <= rate <= 5

@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 """
 Shows serial port configuration
+
+Run as module from project root:
+python3 -m examples.show_port_config
 """
 import logging
 
@@ -12,13 +15,11 @@ FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('gnss_tool')
 logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 # Create UBX library
-# Note: tty is only used to address modem in gpsd.
-#       the library does not use the tty directly
-ubx = GnssUBlox('/dev/ttyS3')
+ubx = GnssUBlox()
 ubx.setup()
 
 # Register the frame types we use

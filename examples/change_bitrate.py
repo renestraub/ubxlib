@@ -1,6 +1,14 @@
 #!/usr/bin/python3
 """
-Gets current modem bitrate and changes it to 115'200
+Gets current modem bitrate and changes it
+
+When bitrate is 115'200 it is changed to 9'600 and vice versa.
+
+This example uses the TTY server backend to have direct access
+to the modem w/o gpsd.
+
+Run as module from project root:
+python3 -m examples.change_bitrate
 """
 import logging
 
