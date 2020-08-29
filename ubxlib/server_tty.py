@@ -109,23 +109,25 @@ class GnssUBlox(threading.Thread):
             cid = [cid]
 
         self.wait_cid = cid
-        for cid in self.wait_cid:
-            logger.debug(f'expecting {cid}')
+        if logger.isEnabledFor(logging.DEBUG):
+            for cid in self.wait_cid:
+                logger.debug(f'expecting {cid}')
 
         self.parser.set_filter(self.wait_cid)
 
     def send(self, ubx_message):
         assert self.enabled
 
-        logger.debug(f'sending {ubx_message}')
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f'sending {ubx_message}')
 
         # TODO: first call .pack()
         msg_in_binary = ubx_message.to_bytes()
-        # logger.debug(f'sending {msg_in_binary}')
 
         # Send frame to modem tty
         bytes_sent = self.serial_port.write(msg_in_binary)
-        logger.debug(f"sent {bytes_sent} bytes")
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"sent {bytes_sent} bytes")
 
         if bytes_sent != len(msg_in_binary):
             self.gpsd_errors += 1
@@ -140,14 +142,16 @@ class GnssUBlox(threading.Thread):
             self.gpsd_errors = 0
 
     def wait(self, timeout=3.0):
-        logger.debug(f'waiting {timeout}s for reponse from listener thread')
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f'waiting {timeout}s for reponse from listener thread')
 
         # TODO: Timeout loop required if we have queue.get() with timeout?
         time_end = time.time() + timeout
         while time.time() < time_end:
             try:
                 cid, data = self.response_queue.get(True, timeout)
-                logger.debug(f'got response {cid}')
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f'got response {cid}')
 
                 if cid == self.cid_error:
                     logger.warning('error response, no frame available')
@@ -157,7 +161,8 @@ class GnssUBlox(threading.Thread):
 
                 # TODO: Required if parser already filters for us?
                 elif cid in self.wait_cid:
-                    logger.debug(f'received expected frame {cid}')
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug(f'received expected frame {cid}')
 
                     ff = FrameFactory.getInstance()
                     try:
@@ -177,7 +182,8 @@ class GnssUBlox(threading.Thread):
     def _check_poll(self, request, res):
         if res:
             if res.CID == request.CID:
-                logger.debug('ACK matches request')
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug('response matches request')
                 return res
             else:
                 # Must never happen, as one request is in expected list
@@ -189,12 +195,13 @@ class GnssUBlox(threading.Thread):
             if res.CID == UbxAckAck.CID:
                 ack_cid = UbxCID(res.f.clsId, res.f.msgId)
                 if ack_cid == request.CID:
-                    logger.debug('ACK matches request')
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug('ACK matches request')
                     return res
                 else:
                     logger.warning(f'ACK {ack_cid} does not match request {request.CID}')
             elif res.CID == UbxAckNak.CID:
-                logger.debug(f'request {request.CID} rejected, NAK received')
+                logger.warning(f'request {request.CID} rejected, NAK received')
             else:
                 # Must never happen. Only ACK/NAK in expected list
                 logger.error(f'invalid frame received {res.CID}')
@@ -290,7 +297,8 @@ class GnssUBloxBitrate:
                 except UnicodeError:
                     logger.debug("unicode conversion issue, dropping buffer")
 
-                logger.debug(f'bin: {binascii.hexlify(data_bin)}, ascii: {data_ascii}')
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f'bin: {binascii.hexlify(data_bin)}, ascii: {data_ascii}')
 
                 # Check for NMEA frames (ASCII)
                 if 'GGA,' in data_ascii or 'GSV,' in data_ascii or 'GGL,' in data_ascii or 'RMC,' in data_ascii:
