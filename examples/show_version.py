@@ -28,13 +28,15 @@ ubx.register_frame(UbxMonVer)
 # Poll version from modem
 poll_version = UbxMonVerPoll()
 res = ubx.poll(poll_version)
+if res:
+    # Simple print of received answer frame
+    print(f'Received answer from modem\n{res}')
 
-# Simple print of received answer frame
-print(f'Received answer from modem\n{res}')
-
-# Can also access fields of UbxMonVer via .f member
-print()
-print(f'SW Version: {res.f.swVersion}')
-print(f'HW Version: {res.f.hwVersion}')
+    # Can also access fields of UbxMonVer via .f member
+    print()
+    print(f'SW Version: {res.f.swVersion}')
+    print(f'HW Version: {res.f.hwVersion}')
+else:
+    print('no answer from modem')
 
 ubx.cleanup()
