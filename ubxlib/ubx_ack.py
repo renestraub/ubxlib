@@ -12,3 +12,14 @@ class UbxAckAck(UbxFrame):
 
         self.f.add(U1('clsId'))
         self.f.add(U1('msgId'))
+
+
+class UbxAckNak(UbxFrame):
+    CID = UbxCID(0x05, 0x00)
+    NAME = 'UBX-ACK-NAK'
+
+    def __init__(self):
+        super().__init__()
+
+        self.f.add(U1('clsId'))
+        self.f.add(U1('msgId'))
