@@ -1,4 +1,4 @@
-# import pytest
+import pytest
 
 from ubxlib.types import Fields
 from ubxlib.types import Padding, U1, I4, U4
@@ -73,3 +73,11 @@ class TestFields:
         # combined message
         # string
         pass
+
+    def test_no_duplicate_fields(self):
+        u = Fields()
+        u.add(I4('test1'))
+
+        # Must fail as name 'test1' is already used
+        with pytest.raises(KeyError):
+            u.add(I4('test1'))
