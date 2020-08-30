@@ -77,8 +77,9 @@ class GnssUBlox(UbxServerBase_):
                     self.enabled = True
                     self.thread_ready_event.set()
 
-                # TODO: FInd out what's better really small (32) or truly large values (8192)
-                data = self.serial_port.read(2)
+                # Intensive tests have shown that large read request perform better
+                # in terms of data loss or TTY issues.
+                data = self.serial_port.read(2048)
                 if data:
                     self.parser.process(data)
             except SerialException as msg:
