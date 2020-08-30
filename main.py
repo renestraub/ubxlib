@@ -203,7 +203,7 @@ for i in range(0, 10000):
     # print(res)
     res.pack()
 
-    ubx.expect(UbxAckAck.CID)
+    ubx._expect(UbxAckAck.CID)
     ubx.send(res)
     ubx.wait()
 
