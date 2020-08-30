@@ -45,7 +45,6 @@ def configure_tp(ubx):
 
     msg_cfg_tp5_poll = UbxCfgTp5Poll()
     msg_cfg_tp5_poll.f.tpIdx = 1
-    msg_cfg_tp5_poll.pack()
     tp5 = ubx.poll(msg_cfg_tp5_poll)
     if tp5:
         tp5.f.flags = 1+2+16    # Active, lock to GPS, isLength
@@ -91,7 +90,6 @@ def io_event_loop(ubx):
                 # Prepare next frame
                 esf_speed.f.timeTag = time_event_ms
                 esf_speed.f.data = (speed & 0xFFFFFF) | data_type_speed << 24
-                esf_speed.pack()
                 # logger.info(f'sending frame {i}')
                 ubx.send(esf_speed)
 
