@@ -1,3 +1,4 @@
+import binascii
 import logging
 import threading
 from enum import Enum
@@ -20,10 +21,11 @@ class UbxParser(object):
     TODO: Do more elaborate parsing to filter out such data in advance
     """
 
+    """ Maximum message length supported """
+    MAX_MESSAGE_LENGTH = 1000
+
     class State(Enum):
-        """
-        Parser states
-        """
+        """ Parser states """
         INIT = 1
         SYNC = 2
         CLASS = 3
@@ -85,10 +87,16 @@ class UbxParser(object):
             elif self.state == __class__.State.LEN2:
                 self.msg_len = self.msg_len + (d * 256)
                 self.checksum.add(d)
-                # TODO: Handle case with len = 0 -> goto CRC directly
-                # TODO: Handle case with unreasonable size
-                self.ofs = 0
-                self.state = __class__.State.DATA
+
+                if self.msg_len == 0:
+                    self.state = __class__.State.CRC1
+                elif self.msg_len > __class__.MAX_MESSAGE_LENGTH:
+                    logger.warning(f'invalid msg len {self.msg_len}')
+                    self._reset()
+                    self.state = __class__.State.INIT
+                else:
+                    self.ofs = 0
+                    self.state = __class__.State.DATA
 
             elif self.state == __class__.State.DATA:
                 self.msg_data.append(d)
@@ -106,7 +114,7 @@ class UbxParser(object):
 
                 # if checksum matches received checksum ..
                 if self.checksum.matches(self.cka, self.ckb):
-                    # .. and frame passes filter(s) ..
+                    # .. and frame passes filter ..
                     cid = UbxCID(self.msg_class, self.msg_id)
 
                     with self.wait_cid_lock:
@@ -134,6 +142,7 @@ class UbxParser(object):
                             logger.debug(f'no filters - dropping {cid}')
                 else:
                     logger.warning(f'checksum error in frame, discarding')
+                    logger.warning(f'{self.msg_class} {self.msg_id} {binascii.hexlify(self.msg_data)}')
 
                 self._reset()
                 self.state = __class__.State.INIT
