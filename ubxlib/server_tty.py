@@ -1,211 +1,24 @@
 import binascii
 import logging
-import queue
-import sys
-import threading
 import time
 
 from serial import Serial
 from serial.serialutil import SerialException
 
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.frame_factory import FrameFactory
-from ubxlib.parser import UbxParser
-from ubxlib.ubx_ack import UbxAckAck, UbxAckNak
+from ubxlib.server_base import UbxServerBase_
 
 logger = logging.getLogger(__name__)
 
 
-# TODO: Factor out code shared with server.py and create baseclass
-class GnssUBlox(threading.Thread):
+class GnssUBlox(UbxServerBase_):
     def __init__(self, device_name=None, baudrate=115200):
         super().__init__()
 
         self.device_name = device_name
         self.baudrate = baudrate
         self.enabled = False
-
         self.serial_port = None
-        self.response_queue = queue.Queue()
-        self.parser = UbxParser(self.response_queue)
-        self.thread_ready_event = threading.Event()
-        self.thread_stop_event = threading.Event()
-
-        self.frame_factory = FrameFactory.getInstance()
-        self.wait_cid = None
-        self.gpsd_errors = 0
-        self.cid_error = UbxCID(0x00, 0x01)
-
-    def setup(self):
-        # Register ACK-ACK frame, as it's used internally by this module
-        self.frame_factory.register(UbxAckAck)
-        self.frame_factory.register(UbxAckNak)
-
-        # Start worker thread in daemon mode, will invoke run() method
-        self.daemon = True
-        self.start()
-
-        # Wait for worker thread to become ready.
-        # Without this wait we might send the command before the thread can
-        # handle the response.
-        logger.info('waiting for receive thread to become active')
-        ready = self.thread_ready_event.wait(timeout=1.0)
-        if not ready:
-            logger.error('timeout while connecting to device')
-
-        return ready
-
-    def cleanup(self):
-        logger.info('requesting thread to stop')
-        self.thread_stop_event.set()
-
-        # Wait until thread ended
-        self.join(timeout=1.0)
-        logger.info('thread stopped')
-
-    def register_frame(self, frame_type):
-        self.frame_factory.register(frame_type)
-
-    def poll(self, message):
-        """
-        Poll a receiver status
-
-        - sends the specified poll message
-        - waits for receiver message with same class/id as poll message
-        """
-        assert isinstance(message, UbxFrame)
-
-        self.expect(message.CID)
-        self.send(message)
-        res = self.wait()
-        return self._check_poll(message, res)
-
-    def set(self, message):
-        """
-        Send a set message to modem
-
-        - creates bytes representation of set frame
-        - send set message to modem
-        - waits for ACK/NAK
-        """
-        assert isinstance(message, UbxFrame)
-
-        message.pack()
-        self.expect([UbxAckAck.CID, UbxAckNak.CID])
-        self.send(message)
-        res = self.wait()
-        return self._check_ack_nak(message, res)
-
-    """
-    Private methods
-    """
-    def expect(self, cid):
-        """
-        Define message to wait for
-        Can be a single CID or a list of CIDs
-        """
-        if not isinstance(cid, list):
-            cid = [cid]
-
-        self.wait_cid = cid
-        if logger.isEnabledFor(logging.DEBUG):
-            for cid in self.wait_cid:
-                logger.debug(f'expecting {cid}')
-
-        self.parser.set_filter(self.wait_cid)
-
-    def send(self, ubx_message):
-        assert self.enabled
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f'sending {ubx_message}')
-
-        # TODO: first call .pack()
-        msg_in_binary = ubx_message.to_bytes()
-
-        # Send frame to modem tty
-        bytes_sent = self.serial_port.write(msg_in_binary)
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"sent {bytes_sent} bytes")
-
-        if bytes_sent != len(msg_in_binary):
-            self.gpsd_errors += 1
-            logger.warning(f'command not accepted by tty, {self.gpsd_errors} error(s)')
-
-            # Report error to waiting client, so it does not block
-            # Use custom CID not used by u-blox, if there was someting
-            # like UBX-ACK-TIMEOUT we would use that.
-            # TODO: Consider UBX-ACK-NAK ..
-            self.response_queue.put((self.cid_error, None))
-        else:
-            self.gpsd_errors = 0
-
-    def wait(self, timeout=3.0):
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f'waiting {timeout}s for reponse from listener thread')
-
-        # TODO: Timeout loop required if we have queue.get() with timeout?
-        time_end = time.time() + timeout
-        while time.time() < time_end:
-            try:
-                cid, data = self.response_queue.get(True, timeout)
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug(f'got response {cid}')
-
-                if cid == self.cid_error:
-                    logger.warning('error response, no frame available')
-
-                    self.parser.clear_filter()
-                    return None
-
-                # TODO: Required if parser already filters for us?
-                elif cid in self.wait_cid:
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug(f'received expected frame {cid}')
-
-                    ff = FrameFactory.getInstance()
-                    try:
-                        frame = ff.build_with_data(cid, data)
-
-                    except KeyError:
-                        # If we can't parse the frame, return as is
-                        logger.debug(f'frame not registered, cannot decode: {binascii.hexlify(data)}')
-                        frame = UbxFrame()
-
-                    self.parser.clear_filter()
-                    return frame
-
-            except queue.Empty:
-                logger.warning('timeout...')
-
-    def _check_poll(self, request, res):
-        if res:
-            if res.CID == request.CID:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('response matches request')
-                return res
-            else:
-                # Must never happen, as one request is in expected list
-                logger.error(f'invalid frame received {res.CID}')
-                assert False
-
-    def _check_ack_nak(self, request, res):
-        if res:
-            if res.CID == UbxAckAck.CID:
-                ack_cid = UbxCID(res.f.clsId, res.f.msgId)
-                if ack_cid == request.CID:
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('ACK matches request')
-                    return res
-                else:
-                    logger.warning(f'ACK {ack_cid} does not match request {request.CID}')
-            elif res.CID == UbxAckNak.CID:
-                logger.warning(f'request {request.CID} rejected, NAK received')
-            else:
-                # Must never happen. Only ACK/NAK in expected list
-                logger.error(f'invalid frame received {res.CID}')
-                assert False
+        self.tx_errors = 0
 
     def run(self):
         """
@@ -221,7 +34,6 @@ class GnssUBlox(threading.Thread):
             self.serial_port = Serial(self.device_name, timeout=0.1, baudrate=self.baudrate)
             assert self.serial_port
 
-            logger.debug('starting listener on tty')
             self._main_loop()
 
             self.serial_port.close()
@@ -232,6 +44,30 @@ class GnssUBlox(threading.Thread):
         except SerialException as msg:
             logger.error(msg)
 
+    def _send(self, ubx_message):
+        assert self.enabled
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f'sending {ubx_message}')
+
+        msg_in_binary = ubx_message.to_bytes()
+
+        # Send data to modem tty
+        bytes_sent = self.serial_port.write(msg_in_binary)
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"sent {bytes_sent} bytes")
+
+        if bytes_sent != len(msg_in_binary):
+            self.tx_errors += 1
+            logger.warning(f'command not accepted by tty, {self.tx_errors} error(s)')
+
+            # Report error to waiting client, so it does not block
+            # Use custom CID not used by u-blox, if there was someting
+            # like UBX-ACK-TIMEOUT we would use that.
+            self.response_queue.put((self.cid_error, None))
+        else:
+            self.tx_errors = 0
+
     def _main_loop(self):
         logger.info('starting listener on tty')
 
@@ -241,7 +77,8 @@ class GnssUBlox(threading.Thread):
                     self.enabled = True
                     self.thread_ready_event.set()
 
-                data = self.serial_port.read(1024)
+                # TODO: FInd out what's better really small (32) or truly large values (8192)
+                data = self.serial_port.read(2)
                 if data:
                     self.parser.process(data)
             except SerialException as msg:
@@ -297,8 +134,8 @@ class GnssUBloxBitrate:
                 except UnicodeError:
                     logger.debug("unicode conversion issue, dropping buffer")
 
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug(f'bin: {binascii.hexlify(data_bin)}, ascii: {data_ascii}')
+                # if logger.isEnabledFor(logging.DEBUG):
+                #     logger.debug(f'bin: {binascii.hexlify(data_bin)}, ascii: {data_ascii}')
 
                 # Check for NMEA frames (ASCII)
                 if 'GGA,' in data_ascii or 'GSV,' in data_ascii or 'GGL,' in data_ascii or 'RMC,' in data_ascii:
