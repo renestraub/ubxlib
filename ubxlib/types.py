@@ -173,7 +173,10 @@ class Fields(object):
         field.order = self.next_ord()
 
         # Create named entry in dictionary for value
-        self._fields[field.name] = field
+        if field.name not in self._fields:
+            self._fields[field.name] = field
+        else:
+            raise KeyError
 
     def get(self, field):
         return self._fields[field]
