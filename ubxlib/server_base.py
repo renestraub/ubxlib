@@ -303,7 +303,6 @@ class UbxServerBase_(object):
 
     def _check_mga(self, request, res):
         if res:
-            print(res)
             if res.CID == UbxMgaAckData0.CID:
                 if res.f.type == 1:
                     return True
