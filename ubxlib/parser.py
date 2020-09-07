@@ -36,10 +36,12 @@ class UbxParser(object):
         CRC1 = 8
         CRC2 = 9
 
-    def __init__(self, rx_queue):
+    def __init__(self, rx_queue, crc_error_cid):
         super().__init__()
 
         self.rx_queue = rx_queue
+        self.crc_error_cid = crc_error_cid
+
         self.checksum = Checksum()
 
         self._reset()
@@ -92,7 +94,6 @@ class UbxParser(object):
                     self.state = __class__.State.CRC1
                 elif self.msg_len > __class__.MAX_MESSAGE_LENGTH:
                     logger.warning(f'invalid msg len {self.msg_len}')
-                    self._reset()
                     self.state = __class__.State.INIT
                 else:
                     self.ofs = 0
@@ -129,22 +130,16 @@ class UbxParser(object):
                             if logger.isEnabledFor(logging.DEBUG):
                                 logger.debug(f'no match - dropping {cid}')
                         
-                        """
-                        for filter in filters:
-                            if filter and cid == filter:
-                                # .. send CID and data as tuple to server
-                                message = (cid, self.msg_data)
-                                self.rx_queue.put(message)
-                                break
-                        """
                     else:
                         if logger.isEnabledFor(logging.DEBUG):
                             logger.debug(f'no filters - dropping {cid}')
                 else:
                     logger.warning(f'checksum error in frame, discarding')
-                    logger.warning(f'{self.msg_class} {self.msg_id} {binascii.hexlify(self.msg_data)}')
+                    logger.warning(f'{self.msg_class:02x} {self.msg_id:02x} {binascii.hexlify(self.msg_data)}')
+                    
+                    crc_error_message = (self.crc_error_cid, None)
+                    self.rx_queue.put(crc_error_message)
 
-                self._reset()
                 self.state = __class__.State.INIT
 
     def _reset(self):
