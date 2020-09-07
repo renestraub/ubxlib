@@ -1,10 +1,14 @@
 import binascii
 import logging
+import queue
 import time
 
 from serial import Serial
 from serial.serialutil import SerialException
 
+from ubxlib.cid import UbxCID
+from ubxlib.frame import UbxFrame
+from ubxlib.frame_factory import FrameFactory
 from ubxlib.server_base import UbxServerBase_
 
 logger = logging.getLogger(__name__)
@@ -16,76 +20,52 @@ class GnssUBlox(UbxServerBase_):
 
         self.device_name = device_name
         self.baudrate = baudrate
-        self.enabled = False
         self.serial_port = None
-        self.tx_errors = 0
+        self.enabled = False
 
-    def run(self):
-        """
-        Thread running method
+    def setup(self):
+        res = super().setup()
+        self._open_port()
+        self.enabled = True
+        return res
 
-        - receives raw data from tty
-        - parses ubx frames, decodes them
-        - if a frame is received it is put in the receive queue
-        """
-        try:
-            logger.info(f'connecting to {self.device_name} at {self.baudrate} bps')
+    def cleanup(self):
+        self.enabled = False
+        self._close_port()
+        super().cleanup()
 
-            self.serial_port = Serial(self.device_name, timeout=0.1, baudrate=self.baudrate)
-            assert self.serial_port
+    """
+    Base class implementation
+    """
+    def _recover(self):
+        self._close_port()
+        time.sleep(0.1)
+        self._open_port()
 
-            self._main_loop()
+    def _receive(self):
+        # see _open_port() for read timeout
+        data = self.serial_port.read(32)
+        return data
 
+    def _transmit(self, data):
+        bytes_sent = self.serial_port.write(data)
+
+        # if logger.isEnabledFor(logging.DEBUG):
+        #     logger.debug(f"sent {bytes_sent} bytes")
+        return bytes_sent == len(data)
+
+    """
+    Private methods
+    """
+    def _open_port(self):
+        self.serial_port = Serial(self.device_name, timeout=0.1, baudrate=self.baudrate)
+        # TODO: Proper check missing
+        assert self.serial_port
+
+    def _close_port(self):
+        if self.serial_port:
             self.serial_port.close()
             self.serial_port = None
-
-            logger.debug('receiver done')
-
-        except SerialException as msg:
-            logger.error(msg)
-
-    def _send(self, ubx_message):
-        assert self.enabled
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f'sending {ubx_message}')
-
-        msg_in_binary = ubx_message.to_bytes()
-
-        # Send data to modem tty
-        bytes_sent = self.serial_port.write(msg_in_binary)
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"sent {bytes_sent} bytes")
-
-        if bytes_sent != len(msg_in_binary):
-            self.tx_errors += 1
-            logger.warning(f'command not accepted by tty, {self.tx_errors} error(s)')
-
-            # Report error to waiting client, so it does not block
-            # Use custom CID not used by u-blox, if there was someting
-            # like UBX-ACK-TIMEOUT we would use that.
-            self.response_queue.put((self.cid_error, None))
-        else:
-            self.tx_errors = 0
-
-    def _main_loop(self):
-        logger.info('starting listener on tty')
-
-        while not self.thread_stop_event.is_set():
-            try:
-                if not self.enabled:
-                    self.enabled = True
-                    self.thread_ready_event.set()
-
-                # Intensive tests have shown that large read request perform better
-                # in terms of data loss or TTY issues.
-                data = self.serial_port.read(2048)
-                if data:
-                    self.parser.process(data)
-            except SerialException as msg:
-                logger.warning(msg)
-
-        self.enabled = False
 
 
 class GnssUBloxBitrate:
