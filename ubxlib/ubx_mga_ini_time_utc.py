@@ -33,13 +33,12 @@ class UbxMgaIniTimeUtc(UbxMgaIniTimeUtc_):
         self.f.add(Padding(2, 'res2'))
         self.f.add(U4('tAccNs'))
 
-    def set_current_dt(self):
-        dt = datetime.datetime.utcnow()
-        print(dt)
-
-        self.f.type = 0x10
+    def set_datetime(self, dt):
+        self.f.type = 0x10      # 0x10 for UTC time format
         self.f.version = 0x00
-        self.f.ref = 0x00       # none, i.e. on receipt of message (will be inaccurate!)
+        self.f.ref = 0x00       # receipt of message will be inaccurate
+
+        self.f.leapSecs = -128   # number of leap seconds is unknown
 
         self.f.year = dt.year
         self.f.month = dt.month
@@ -49,5 +48,7 @@ class UbxMgaIniTimeUtc(UbxMgaIniTimeUtc_):
         self.f.second = dt.second
         self.f.ns = 0   # dt.microsecond * 1000.0
 
-        self.f.tAccS = 2
-        self.f.tAccNs = 0
+        self.f.tAccS = 10
+        self.f.tAccNs = 0  # 999999999
+        # Accuracy 0 taken from u-center example
+        # not sure whether this is correct
