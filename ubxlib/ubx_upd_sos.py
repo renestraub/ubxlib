@@ -43,3 +43,9 @@ class UbxUpdSosAction(UbxUpdSos_):
         self.f.add(U1('res1_1'))
         self.f.add(U1('res1_2'))
         self.f.add(U1('res1_3'))
+
+    def backup(self):
+        self.f.cmd = UbxUpdSosAction.SAVE
+
+    def clear(self):
+        self.f.cmd = UbxUpdSosAction.CLEAR
