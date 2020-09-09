@@ -2,6 +2,8 @@ import struct
 
 
 class Item(object):
+    fmt = ''
+
     def __init__(self, name, value=None):
         self.order = -1
         self.name = name
@@ -26,9 +28,7 @@ class Item(object):
         """
         fmt_string = '<' + self.fmt    # use little endian mode
         length = struct.calcsize(fmt_string)
-        # print(f'unpacking {length}')
         results = struct.unpack(fmt_string, data[:length])
-        # print(results[0])
         self.value = results[0]
         return length
 
@@ -70,10 +70,14 @@ class CH(Item):
         """
         Dedicated pack method for fixed-sized strings
 
-        Inserts 0x00 padding bytes
+        Inserts 0x00 padding bytes if required
         """
         data = self.value.encode()
-        # TODO: Fill up string with 0es when shorter than field
+        if len(data) < self.length:
+            data = data + bytes(self.length - len(data))
+        elif len(data) > self.length:
+            raise ValueError
+
         return data[0:self.length]
 
     def unpack(self, data):
@@ -81,15 +85,24 @@ class CH(Item):
         Dedicated unpack method for fixed-sized strings
 
         Extracts ISO 8859-1 text directly from data and converts it
-        to Python string (Unicode).
+        to Python string (Unicode). Trailing zeroes (padding) at end
+        of string are removed.
         Advances buffer by fixed size of text.
         """
-        # TODO: Length check
-        # print(f"unpacking {self.length} from {data}")
+        # Check that we have enough payload to process
+        if len(data) < self.length:
+            raise ValueError
+
+        # Check string is valid, for simplicty raise ValueError so caller
+        # does not need to know about Unicode conversion
         raw_text = data[:self.length]
-        # TODO: Decoder error check
-        text = raw_text.decode()
-        # print(text)
+        try:
+            text = raw_text.decode()
+        except UnicodeDecodeError:
+            raise ValueError
+
+        # Remove trailing termination characters (0x00)
+        text = text.rstrip('\x00')
         self.value = text
 
         return self.length
@@ -182,12 +195,8 @@ class Fields(object):
         return self._fields[field]
 
     def unpack(self, data):
-        # print('unpacking from data')
-        # print(f'data {data}')
-
         work_data = data
-        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
-            # print(f'data {work_data}')
+        for (_, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
             consumed = v.unpack(work_data)
             work_data = work_data[consumed:]
 
@@ -195,8 +204,7 @@ class Fields(object):
 
     def pack(self):
         work_data = bytearray()
-        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
-            # print(f'packing {k} {v.value} {type(v)} {v.pack}')
+        for (_, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
             work_data += v.pack()
 
         return work_data
@@ -212,7 +220,6 @@ class Fields(object):
 
         If variable <name> is found in _fields set its value
         """
-        # print(f'*** setting field {name}, {value}')
         if '_fields' in self.__dict__ and name in self.__dict__['_fields']:
             self.__dict__['_fields'][name].value = value
         else:
@@ -222,13 +229,10 @@ class Fields(object):
         """
         Overload to allow direct access to field entries
         """
-        # print(f'*** getting field {name}')
         obj_dict = object.__getattribute__(self, '__dict__')
         if '_fields' in obj_dict:
             _fields = object.__getattribute__(self, '_fields')
-            # print(_fields)
             if name in _fields:
-                # print(f'found {name}')
                 value = _fields[name].value
                 return value
 
@@ -236,7 +240,7 @@ class Fields(object):
 
     def __str__(self):
         res = ''
-        for (k, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
+        for (_, v) in sorted(self._fields.items(), key=lambda item: item[1].order):
             if not isinstance(v, Padding):
                 res += f'\n  {v}'
 
