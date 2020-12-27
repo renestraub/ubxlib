@@ -31,6 +31,9 @@ class GnssUBlox(UbxServerBase_):
         self._close_port()
         super().cleanup()
 
+    def set_baudrate(self, baud):
+        self.serial_port.baudrate = baud
+
     """
     Base class implementation
     """
