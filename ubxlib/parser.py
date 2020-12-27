@@ -1,6 +1,5 @@
 import binascii
 import logging
-import threading
 from enum import Enum
 
 from ubxlib.checksum import Checksum
@@ -36,27 +35,33 @@ class UbxParser(object):
         CRC1 = 8
         CRC2 = 9
 
-    def __init__(self, rx_queue, crc_error_cid):
+    def __init__(self, crc_error_cid):
         super().__init__()
 
-        self.rx_queue = rx_queue
         self.crc_error_cid = crc_error_cid
-
+        self.rx_queue = list()
+        self.wait_cids = None
         self.checksum = Checksum()
-
+        self.frames_rx = 0
+        self.state = __class__.State.INIT
         self._reset()
+
+    def restart(self):
         self.state = __class__.State.INIT
 
-        self.wait_cids = None
-        self.wait_cid_lock = threading.Lock()
-
-    def clear_filter(self):
-        with self.wait_cid_lock:
-            self.wait_cids = None
-
     def set_filter(self, cid):
-        with self.wait_cid_lock:
-            self.wait_cids = cid
+        self.wait_cids = cid
+
+    def empty_queue(self):
+        self.rx_queue.clear()
+
+    def packet(self):
+        # Returns (cid, data) or (None, None)
+        try:
+            return self.rx_queue.pop(0)
+        except IndexError:
+            # No more frames to de-queue
+            return (None, None)
 
     def process(self, data):
         for d in data:
@@ -103,6 +108,7 @@ class UbxParser(object):
                 self.msg_data.append(d)
                 self.checksum.add(d)
                 self.ofs += 1
+
                 if self.ofs == self.msg_len:
                     self.state = __class__.State.CRC1
 
@@ -115,30 +121,24 @@ class UbxParser(object):
 
                 # if checksum matches received checksum ..
                 if self.checksum.matches(self.cka, self.ckb):
+                    self.frames_rx += 1
+
                     # .. and frame passes filter ..
                     cid = UbxCID(self.msg_class, self.msg_id)
 
-                    with self.wait_cid_lock:
-                        filters = self.wait_cids
-
-                    if filters:
-                        if cid in filters:
-                            # .. send CID and data as tuple to server
-                            message = (cid, self.msg_data)
-                            self.rx_queue.put(message)
-                        else:
-                            if logger.isEnabledFor(logging.DEBUG):
-                                logger.debug(f'no match - dropping {cid}')
-                        
+                    if cid in self.wait_cids:
+                        # .. queue packet (CID and data)
+                        packet = (cid, self.msg_data)
+                        self.rx_queue.append(packet)
                     else:
                         if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug(f'no filters - dropping {cid}')
+                            logger.debug(f'no match - dropping {cid}, {self.msg_len} bytes')
                 else:
                     logger.warning(f'checksum error in frame, discarding')
                     logger.warning(f'{self.msg_class:02x} {self.msg_id:02x} {binascii.hexlify(self.msg_data)}')
-                    
+
                     crc_error_message = (self.crc_error_cid, None)
-                    self.rx_queue.put(crc_error_message)
+                    self.rx_queue.append(crc_error_message)
 
                 self.state = __class__.State.INIT
 
@@ -150,5 +150,4 @@ class UbxParser(object):
         self.cka = 0
         self.ckb = 0
         self.ofs = 0
-
         self.checksum.reset()
