@@ -82,7 +82,7 @@ class UbxServerBase_(object):
                 if packet:
                     res_check = self._check_poll(frame_poll, packet)
                     if res_check:
-                        return res_check
+                        return packet
             else:
                 logger.warning('send failed')
 
@@ -95,7 +95,6 @@ class UbxServerBase_(object):
         # loose data.
         # Sometimes even Linux driver errors are visible in the
         # kernel log
-        assert False
 
     def set(self, frame_set):
         """
@@ -121,8 +120,10 @@ class UbxServerBase_(object):
             packet = self._wait()
             if packet:
                 res_check = self._check_ack_nak(frame_set, packet)
-                if res_check:
-                    return res_check
+                if res_check == 'ACK':
+                    return packet
+                elif res_check == 'NAK':
+                    return
 
             logger.warning(f'set: timeout, retrying {retry + 1}')
 
@@ -154,7 +155,8 @@ class UbxServerBase_(object):
         packet = self._wait()
         if packet:
             res_check = self._check_mga(frame_set_mga, packet)
-            return res_check
+            if res_check:
+                return packet
 
     def fire_and_forget(self, frame_set):
         """
@@ -288,11 +290,10 @@ class UbxServerBase_(object):
         if res.CID == request.CID:
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug('response matches request')
-            return res
+            return True
         else:
             # Must never happen, as only request CID is in expected list
             logger.error(f'invalid frame received {res.CID}')
-            assert False
 
     def _check_ack_nak(self, request, res):
         if res.CID == UbxAckAck.CID:
@@ -300,15 +301,16 @@ class UbxServerBase_(object):
             if ack_cid == request.CID:
                 if logger.isEnabledFor(logging.DEBUG):
                     logger.debug('ACK matches request')
-                return res
+                return "ACK"
             else:
+                # ACK is for another request
                 logger.warning(f'ACK {ack_cid} does not match request {request.CID}')
         elif res.CID == UbxAckNak.CID:
             logger.warning(f'request {request.CID} rejected, NAK received')
+            return "NAK"
         else:
             # Must never happen. Only ACK/NAK in expected list
             logger.error(f'invalid frame received {res.CID}')
-            assert False
 
     def _check_mga(self, request, res):
         if res.CID == UbxMgaAckData0.CID:
@@ -319,4 +321,3 @@ class UbxServerBase_(object):
         else:
             # Must never happen. Only MGA ACK in expected list
             logger.error(f'invalid frame received {res.CID}')
-            assert False
