@@ -29,12 +29,14 @@ ubx.register_frame(UbxCfgPrtUart)
 poll_cfg = UbxCfgPrtPoll()
 poll_cfg.f.PortId = UbxCfgPrtPoll.PORTID_Uart
 res = ubx.poll(poll_cfg)
+if res:
+    # Simple print of received answer frame
+    print(f'Received answer from modem\n{res}')
 
-# Simple print of received answer frame
-print(f'Received answer from modem\n{res}')
-
-# Get out protocol as value and string
-print(res.get('outProtoMask').value)
-print(res.get('outProtoMask').protocols)
+    # Get out protocol as value and string
+    print(res.get('outProtoMask').value)
+    print(res.get('outProtoMask').protocols)
+else:
+    print('Poll failed')
 
 ubx.cleanup()

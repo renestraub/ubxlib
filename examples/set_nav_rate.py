@@ -15,7 +15,7 @@ FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
 logger.setLevel(logging.INFO)
-#logger.setLevel(logging.DEBUG)
+# logger.setLevel(logging.DEBUG)
 
 
 rate = int(input('Please enter desired rate in Hz (1..5): '))
@@ -32,12 +32,14 @@ ubx.register_frame(UbxCfgRate)
 poll_rate_cfg = UbxCfgRatePoll()
 res = ubx.poll(poll_rate_cfg)
 print(res)
+if res:
+    # Now change to desired navigation output rate
+    res.set_rate_in_hz(rate)
 
-# Now change to desired navigation output rate
-res.set_rate_in_hz(rate)
-
-# Send command to modem, result is ack_nak from modem
-ack_nak = ubx.set(res)
-print(ack_nak)      # Just print result, could also check for ACK-ACK CID
+    # Send command to modem, result is ack_nak from modem
+    ack_nak = ubx.set(res)
+    print(ack_nak)      # Just print result, no further check
+else:
+    print('Poll failed')
 
 ubx.cleanup()

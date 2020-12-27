@@ -262,7 +262,6 @@ class UbxServerBase_(object):
 
             # Check if process could decode one or more frames
             # Loop exists when no more frames are to handle
-            # while True:
             cid, data = self.parser.packet()
             if cid and data:
                 if logger.isEnabledFor(logging.DEBUG):

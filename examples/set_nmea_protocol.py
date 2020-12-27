@@ -31,7 +31,7 @@ ubx.register_frame(UbxCfgNmea)
 poll_nmea_cfg = UbxCfgNmeaPoll()
 res = ubx.poll(poll_nmea_cfg)
 if res:
-    proto_ver = res.f.nmeaVersion // 16     # Protovol is encoded in high/low nibble
+    proto_ver = res.f.nmeaVersion // 16     # Protocol is encoded in high/low nibble
     proto_rev = res.f.nmeaVersion % 16      # e.g. 0x40 = 4.0
     print(f'current NMEA protocol version is {proto_ver}.{proto_rev}')
 
@@ -41,8 +41,10 @@ if res:
     else:
         res.f.nmeaVersion = 0x40
 
-        # Send command to modem, result is ack_nak from modem
+    # Send command to modem, result is ack_nak from modem
     ack_nak = ubx.set(res)
-    print(ack_nak)      # Just print result, could also check for ACK-ACK CID
+    print(ack_nak)      # Just print result, no further check
+else:
+    print('Poll failed')
 
 ubx.cleanup()
