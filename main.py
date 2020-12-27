@@ -5,7 +5,8 @@ import logging
 import time
 
 from ubxlib.cid import UbxCID
-from ubxlib.server import GnssUBlox
+# from ubxlib.server import GnssUBlox
+from ubxlib.server_tty import GnssUBlox     # TTY direct backend
 from ubxlib.ubx_ack import UbxAckAck
 from ubxlib.ubx_cfg_cfg import UbxCfgCfgAction
 from ubxlib.ubx_cfg_esfalg import UbxCfgEsfAlg, UbxCfgEsfAlgPoll
@@ -25,15 +26,10 @@ logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
 logger.setLevel(logging.DEBUG)
 
-
-"""
-msg_cfg_port_poll = bytearray.fromhex('06 00 01 00 01')  # UBX-CFG-PRT poll
-msg_nav_status_poll = bytearray.fromhex('01 03 00 00')
-"""
-
 # Create UBX library
-# ubx = GnssUBlox('/dev/ttyS3')
-ubx = GnssUBlox()
+ubx = GnssUBlox('/dev/gnss0')
+# ubx = GnssUBlox()
+
 ready = ubx.setup()
 assert ready
 
@@ -42,43 +38,16 @@ protocols = [UbxMonVer, UbxEsfStatus, UbxEsfAlg, UbxNavStatus]
 for p in protocols:
     ubx.register_frame(p)
 
-#ubx.register_frame(UbxMonVer)
-#ubx.register_frame(UbxEsfStatus)
+# ubx.register_frame(UbxMonVer)
+# ubx.register_frame(UbxEsfStatus)
 ubx.register_frame(UbxUpdSos)
 ubx.register_frame(UbxCfgTp5)
 ubx.register_frame(UbxCfgNmea)
 ubx.register_frame(UbxCfgGnss)
 ubx.register_frame(UbxCfgNav5)
 ubx.register_frame(UbxCfgEsfAlg)
-#ubx.register_frame(UbxEsfAlg)
+# ubx.register_frame(UbxEsfAlg)
 
-"""
-# Remove backup
-m = UbxUpdSosAction()
-m.f.cmd = UbxUpdSosAction.CLEAR
-m.pack()
-print(m)
-print(m.f.cmd)
-# quit()
-
-r.expect(UbxAckAck.CID)
-r.send(m)
-r.wait()
-"""
-
-"""
-m = UbxCfgRstAction()
-m.stop()
-m.pack()
-ubx.send(m)
-
-time.sleep(2.5)
-
-m = UbxCfgRstAction()
-m.start()
-m.pack()
-ubx.send(m)
-"""
 
 m = UbxMonVerPoll()
 res = ubx.poll(m)
@@ -164,16 +133,11 @@ m = UbxCfgRstAction()
 m.cold_start()
 m.pack()
 ubx.send(m)
-
-m = UbxMgaIniTimeUtc()
-m.set_current_dt()
-m.pack()
-ubx.send(m)
 """
 
-quit(0)
+# quit(0)
 
-for i in range(0, 10000):
+for i in range(0, 100):
     print(f'***** {i} ***********************')
 
     logger.debug('getting SOS state')
@@ -185,10 +149,8 @@ for i in range(0, 10000):
 
     msg_cfg_tp5_poll = UbxCfgTp5Poll()
     msg_cfg_tp5_poll.f.tpIdx = 1
-    # TODO: .pack has to go elsewhere, better hidden in to_bytes()
-    msg_cfg_tp5_poll.pack()
     print(msg_cfg_tp5_poll)
-    print(binascii.hexlify(msg_cfg_tp5_poll.to_bytes()))
+    # print(binascii.hexlify(msg_cfg_tp5_poll.to_bytes()))
     res = ubx.poll(msg_cfg_tp5_poll)
     print(res)
     if i > 1:
@@ -201,16 +163,10 @@ for i in range(0, 10000):
     res.f.pulseLenRatio = 500   # 500 ns = 50% duty cycle
     res.f.pulseLenRatioLock = 250   # 250 ns = 25% duty cycle
     # print(res)
-    res.pack()
 
-    ubx._expect(UbxAckAck.CID)
-    ubx.send(res)
-    ubx.wait()
+    ack = ubx.set(res)
+    print(ack)
 
     time.sleep(1.87)
 
 ubx.cleanup()
-
-
-# TODO: ubx-cfg-nmea
-# TODO:  nmea version = 4.10
