@@ -4,7 +4,7 @@ from ubxlib.types import Padding, U1, I2, I4, X4
 
 
 class UbxCfgTp5_(UbxFrame):
-    CID = UbxCID(0x06, 0x31)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x31)
     NAME = 'UBX-CFG-TP5'
 
 

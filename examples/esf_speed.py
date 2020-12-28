@@ -45,7 +45,7 @@ for i in range(1000):
     speed = 0
     data_type = 11      # speed, units = m/s * 1e-3, aka mm/s
     esf_speed.f.data = (speed & 0xFFFFFF) | data_type << 24
-    ubx.send(esf_speed)
+    ubx.fire_and_forget(esf_speed)
 
     # Poor mans 10 Hz timer -> replace with gpio event (gpiod)
     time.sleep(0.1)

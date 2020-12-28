@@ -4,7 +4,7 @@ from ubxlib.types import U1, X4
 
 
 class UbxMgaAckData0_(UbxFrame):
-    CID = UbxCID(0x13, 0x60)
+    CID = UbxCID(UbxCID.CLASS_MGA, 0x60)
     NAME = 'UBX-MGA-ACK-DATA0'
 
 

@@ -5,7 +5,7 @@ from ubxlib.types import U1
 
 class UbxUpdSos_(UbxFrame):
     NAME = 'UBX-UPD-SOS'
-    CID = UbxCID(0x09, 0x14)
+    CID = UbxCID(UbxCID.CLASS_UPD, 0x14)
 
 
 class UbxUpdSosPoll(UbxUpdSos_):
@@ -16,7 +16,6 @@ class UbxUpdSosPoll(UbxUpdSos_):
 
 
 class UbxUpdSos(UbxUpdSos_):
-
     def __init__(self):
         super().__init__()
 

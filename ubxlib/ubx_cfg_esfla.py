@@ -4,7 +4,7 @@ from ubxlib.types import Fields, Padding, U1, I2
 
 
 class UbxCfgEsfla_(UbxFrame):
-    CID = UbxCID(0x06, 0x2f)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x2f)
     NAME = 'UBX-CFG-ESFLA'
 
     TYPE_VRP_Antenna = 0

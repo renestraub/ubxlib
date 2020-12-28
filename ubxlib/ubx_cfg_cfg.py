@@ -5,7 +5,7 @@ from ubxlib.types import X4
 
 class UbxCfgCfg_(UbxFrame):
     NAME = 'UBX-CFG-CFG'
-    CID = UbxCID(0x06, 0x09)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x09)
 
 
 class UbxCfgCfgAction(UbxCfgCfg_):

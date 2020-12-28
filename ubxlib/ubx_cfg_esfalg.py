@@ -4,7 +4,7 @@ from ubxlib.types import Padding, X4, U4, I2
 
 
 class UbxCfgEsfAlg_(UbxFrame):
-    CID = UbxCID(0x06, 0x56)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x56)
     NAME = 'UBX-CFG-ESFALG'
 
 

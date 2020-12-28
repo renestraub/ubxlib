@@ -4,7 +4,7 @@ from ubxlib.types import Fields, Padding, X2, X4, U2, U4
 
 
 class UbxEsfMeas_(UbxFrame):
-    CID = UbxCID(0x10, 0x02)
+    CID = UbxCID(UbxCID.CLASS_ESF, 0x02)
     NAME = 'UBX-ESF-MEAS'
 
 

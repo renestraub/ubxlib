@@ -4,7 +4,7 @@ from ubxlib.types import Fields, CH
 
 
 class UbxMonVer_(UbxFrame):
-    CID = UbxCID(0x0A, 0x04)
+    CID = UbxCID(UbxCID.CLASS_MON, 0x04)
     NAME = 'UBX-MON-VER'
 
 

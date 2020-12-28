@@ -39,7 +39,7 @@ class UbxEsfResetAlgAction(UbxFrame):
 
 
 class U1_Flags(U1):
-    status_strings = ['0: user defined/fixed angles', '1: roll/pitch alignment', '2: roll/pitch/yaw', 
+    status_strings = ['0: user defined/fixed angles', '1: roll/pitch alignment', '2: roll/pitch/yaw',
                       '3: coarse', '4: fine', '5', '6', '7']
 
     def __init__(self, name):

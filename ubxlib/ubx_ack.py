@@ -4,7 +4,7 @@ from ubxlib.types import U1
 
 
 class UbxAckAck(UbxFrame):
-    CID = UbxCID(0x05, 0x01)
+    CID = UbxCID(UbxCID.CLASS_ACK, 0x01)
     NAME = 'UBX-ACK-ACK'
 
     def __init__(self):
@@ -15,7 +15,7 @@ class UbxAckAck(UbxFrame):
 
 
 class UbxAckNak(UbxFrame):
-    CID = UbxCID(0x05, 0x00)
+    CID = UbxCID(UbxCID.CLASS_ACK, 0x00)
     NAME = 'UBX-ACK-NAK'
 
     def __init__(self):
