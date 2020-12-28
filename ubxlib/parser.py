@@ -50,7 +50,12 @@ class UbxParser(object):
         self.state = __class__.State.INIT
 
     def set_filter(self, cid):
-        self.wait_cids = cid
+        assert isinstance(cid, UbxCID)
+        self.wait_cids = [cid]  # Put single filter in list
+
+    def set_filters(self, cids):
+        assert isinstance(cids, list)
+        self.wait_cids = cids
 
     def empty_queue(self):
         self.rx_queue.clear()

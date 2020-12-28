@@ -67,7 +67,7 @@ class UbxServerBase_(object):
 
         # We expect a response frame with the exact same CID
         wait_cid = frame_poll.CID
-        self._expect(wait_cid)
+        self.parser.set_filter(wait_cid)
 
         # Serialize polling frame payload.
         # Only a few polling frames required payload, most come w/o.
@@ -108,7 +108,7 @@ class UbxServerBase_(object):
         logger.debug(f"setting {frame_set.NAME}")
 
         # Wait for ACK-ACK / ACK-NAK
-        self._expect([UbxAckAck.CID, UbxAckNak.CID])
+        self.parser.set_filters([UbxAckAck.CID, UbxAckNak.CID])
 
         # Get frame data (header, cls, id, len, payload, checksum a/b)
         frame_set.pack()
@@ -143,7 +143,7 @@ class UbxServerBase_(object):
         logger.debug(f"setting mga {frame_set_mga.NAME}")
 
         # Wait for special MGA ACK frame
-        self._expect(UbxMgaAckData0.CID)
+        self.parser.set_filter(UbxMgaAckData0.CID)
 
         # Get frame data (header, cls, id, len, payload, checksum a/b)
         frame_set_mga.pack()
@@ -216,22 +216,6 @@ class UbxServerBase_(object):
     """
     Private methods
     """
-    def _expect(self, cid):
-        """
-        Define messages to wait for
-
-        Can be a single CID or a list of CIDs
-        """
-        if not isinstance(cid, list):
-            cid = [cid]
-
-        self.wait_cid = cid
-        if logger.isEnabledFor(logging.DEBUG):
-            for cid in self.wait_cid:
-                logger.debug(f'expecting {cid}')
-
-        self.parser.set_filter(self.wait_cid)
-
     def _send(self, ubx_message):
         """
         Send ubx frame to modem via backend driver
