@@ -21,18 +21,18 @@ class GnssUBlox(UbxServerBase_):
         self.device_name = device_name
         self.baudrate = baudrate
         self.serial_port = None
-        self.enabled = False
 
     def setup(self):
         res = super().setup()
         self._open_port()
-        self.enabled = True
         return res
 
     def cleanup(self):
-        self.enabled = False
         self._close_port()
         super().cleanup()
+
+    def set_baudrate(self, baud):
+        self.serial_port.baudrate = baud
 
     """
     Base class implementation
@@ -44,7 +44,7 @@ class GnssUBlox(UbxServerBase_):
 
     def _receive(self):
         # see _open_port() for read timeout
-        data = self.serial_port.read(32)
+        data = self.serial_port.read(1024)
         return data
 
     def _transmit(self, data):

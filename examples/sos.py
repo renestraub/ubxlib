@@ -4,6 +4,8 @@ Application to handle Save-On-Shutdown
 
 This example uses the tty backend that accesses the modem directly (w/o gpsd).
 Ensure gpsd is stopped when running.
+The start command expects that the modem was power cycled or a cold start was
+executed.
 
 Run as module from project root with start or stop argument:
 python3 -m examples.sos [start|stop]
@@ -14,7 +16,7 @@ Start:
 - Enable acknowledge messages for aiding requests
 - Set UTC time to receiver. This is mandatory when recovering from an SoS
   state. If time is not set the next SoS backup will be invalid.
-- Check if a backup was present and if so remove it 
+- Check if a backup was present and if so remove it
 
 Stop
 - Stop the GNSS receiver function, so that the modem state is stable
@@ -25,7 +27,6 @@ import datetime
 import logging
 import time
 
-# from ubxlib.cid import UbxCID
 from ubxlib.server_tty import GnssUBlox
 from ubxlib.ubx_cfg_navx5 import UbxCfgNavx5, UbxCfgNavx5Poll
 from ubxlib.ubx_cfg_rst import UbxCfgRstAction
@@ -88,7 +89,7 @@ def remove_backup(ubx):
     sos.clear()
 
     # This request is neither ACK'ed, nor a response is available
-    ubx.send(sos)
+    ubx.fire_and_forget(sos)
     logger.info('backup removed (no error check possible)')
 
 
@@ -97,8 +98,9 @@ def stop_receiver(ubx):
 
     rst_msg = UbxCfgRstAction()
     rst_msg.stop()
-    ubx.send(rst_msg)
-    # TODO: check if an ACK is sent for stop() command
+
+    # This request is neither ACK'ed, nor a response is available
+    ubx.fire_and_forget(rst_msg)
     time.sleep(1.0)
 
 
@@ -179,8 +181,6 @@ def main():
         # Set UTC time so that recovery from 2D-DR also works
         enable_mga_ack(ubx)
 
-        set_time(ubx)
-        time.sleep(0.5)
         set_time(ubx)
 
         # Check if a backup was present

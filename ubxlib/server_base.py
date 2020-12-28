@@ -1,6 +1,5 @@
 import binascii
 import logging
-import queue
 import time
 
 from ubxlib.cid import UbxCID
@@ -18,13 +17,11 @@ class UbxServerBase_(object):
         super().__init__()
 
         self.cid_crc_error = UbxCID(0x00, 0x02)
-
-        self.response_queue = queue.Queue()
-        self.parser = UbxParser(self.response_queue, self.cid_crc_error)
-
+        self.parser = UbxParser(self.cid_crc_error)
         self.frame_factory = FrameFactory.getInstance()
         self.wait_cid = None
-        self.max_retries = 0
+        self.max_retries = 5
+        self.retry_delay_in_ms = 3000
 
     def setup(self):
         # Register ACK-ACK/ACK-NAK frames, as they are used internally by this module
@@ -43,11 +40,21 @@ class UbxServerBase_(object):
     def register_frame(self, frame_type):
         self.frame_factory.register(frame_type)
 
-    def set_retries(self, num):
-        assert 0 <= num <= 10
-        self.max_retries = num
+    def set_retries(self, retries):
+        logger.debug(f"setting max retries to {retries}")
+        assert 0 <= retries <= 10
+        current = self.max_retries
+        self.max_retries = retries
+        return current
 
-    def poll(self, message):
+    def set_retry_delay(self, delay):
+        logger.debug(f"setting retry delay to {delay} ms")
+        assert 0 <= delay <= 5000
+        current = self.retry_delay_in_ms
+        self.retry_delay_in_ms = delay
+        return current
+
+    def poll(self, frame_poll):
         """
         Poll a receiver status
 
@@ -55,44 +62,41 @@ class UbxServerBase_(object):
         - waits for receiver message with same class/id as poll message
         - retries in case no answer is received
         """
-        assert isinstance(message, UbxFrame)
+        assert isinstance(frame_poll, UbxFrame)
+        logger.debug(f"polling {frame_poll.NAME}")
 
-        message.pack()
-        self._expect(message.CID)
+        # We expect a response frame with the exact same CID
+        wait_cid = frame_poll.CID
+        self.parser.set_filter(wait_cid)
 
-        for tries in range(self.max_retries+1):
-            if tries > 0:
-                logger.warning(f'poll failed, retrying attempt {tries}')
+        # Serialize polling frame payload.
+        # Only a few polling frames required payload, most come w/o.
+        frame_poll.pack()
 
-            res = self._send(message)
+        for retry in range(self.max_retries + 1):
+            self.parser.empty_queue()
+            res = self._send(frame_poll)
+
             if res:
-                res = self._wait()
-                res_check = self._check_poll(message, res)
-                if res_check:
-                    self._calm()
-                    return res_check
+                packet = self._wait()
+                if packet:
+                    res_check = self._check_poll(frame_poll, packet)
+                    if res_check:
+                        return packet
             else:
                 logger.warning('send failed')
 
-            # Give receiver time to recover
-            time.sleep(tries*0.5)
-
-            # It seems we can't recover from an error here
-            # so ask derived class to perform recovery actions
-            self._recover()
-
-        self._calm()
+            logger.warning(f'poll: timeout, retrying {retry + 1}')
 
         # TODO:
         # If we get here something truly bad is going on.
-        # Typically the logs show a lot of checksum errors. 
+        # Typically the logs show a lot of checksum errors.
         # It is not clear whether these are real or if we just
-        # loose data. 
-        # Sometimes even Linux driver errors are visible in the 
-        # kernel log 
-        assert False
+        # loose data.
+        # Sometimes even Linux driver errors are visible in the
+        # kernel log
 
-    def set(self, message):
+    def set(self, frame_set):
         """
         Send a set message to modem and wait for acknowledge
 
@@ -100,19 +104,30 @@ class UbxServerBase_(object):
         - sends set message to modem
         - waits for ACK/NAK
         """
-        assert isinstance(message, UbxFrame)
+        assert isinstance(frame_set, UbxFrame)
+        logger.debug(f"setting {frame_set.NAME}")
 
-        message.pack()
+        # Wait for ACK-ACK / ACK-NAK
+        self.parser.set_filters([UbxAckAck.CID, UbxAckNak.CID])
 
-        self._expect([UbxAckAck.CID, UbxAckNak.CID])
-        # TODO: Error handling/retry
-        self._send(message)
-        res = self._wait()
-        self._calm()
+        # Get frame data (header, cls, id, len, payload, checksum a/b)
+        frame_set.pack()
 
-        return self._check_ack_nak(message, res)
+        for retry in range(self.max_retries + 1):
+            self.parser.empty_queue()
+            self._send(frame_set)
 
-    def set_mga(self, message):
+            packet = self._wait()
+            if packet:
+                res_check = self._check_ack_nak(frame_set, packet)
+                if res_check == 'ACK':
+                    return packet
+                elif res_check == 'NAK':
+                    return
+
+            logger.warning(f'set: timeout, retrying {retry + 1}')
+
+    def set_mga(self, frame_set_mga):
         """
         Send an MGA set message to modem and wait for acknowledge
 
@@ -123,20 +138,27 @@ class UbxServerBase_(object):
         - sends set message to modem
         - waits for ACK-MGA-DATA0
         """
-        assert isinstance(message, UbxFrame)
-        assert message.CID.cls == 0x13      # TODO: Not best style to hardcode 0x13 for MGA Class
+        assert isinstance(frame_set_mga, UbxFrame)
+        assert frame_set_mga.CID.cls == 0x13      # TODO: Not best style to hardcode 0x13 for MGA Class
+        logger.debug(f"setting mga {frame_set_mga.NAME}")
 
-        message.pack()
+        # Wait for special MGA ACK frame
+        self.parser.set_filter(UbxMgaAckData0.CID)
 
-        self._expect(UbxMgaAckData0.CID)
+        # Get frame data (header, cls, id, len, payload, checksum a/b)
+        frame_set_mga.pack()
+
         # TODO: Error handling/retry
-        self._send(message)
-        res = self._wait()
-        self._calm()
+        self.parser.empty_queue()
+        self._send(frame_set_mga)
 
-        return self._check_mga(message, res)
+        packet = self._wait()
+        if packet:
+            res_check = self._check_mga(frame_set_mga, packet)
+            if res_check:
+                return packet
 
-    def send(self, message):
+    def fire_and_forget(self, frame_set):
         """
         Send a set message to modem without waiting for a response
         (fire and forget)
@@ -145,10 +167,15 @@ class UbxServerBase_(object):
         - cold start
         - change baudrate
         """
-        assert isinstance(message, UbxFrame)
+        assert isinstance(frame_set, UbxFrame)
+        logger.debug(f"firing {frame_set.NAME}")
 
-        message.pack()
-        self._send(message)
+        frame_set.pack()
+        self._send(frame_set)
+
+    @DeprecationWarning
+    def send(self, message):
+        self.fire_and_forget(message)
 
     """
     Overrides to be provided by backend implementation
@@ -189,22 +216,6 @@ class UbxServerBase_(object):
     """
     Private methods
     """
-    def _expect(self, cid):
-        """
-        Define messages to wait for
-
-        Can be a single CID or a list of CIDs
-        """
-        if not isinstance(cid, list):
-            cid = [cid]
-
-        self.wait_cid = cid
-        if logger.isEnabledFor(logging.DEBUG):
-            for cid in self.wait_cid:
-                logger.debug(f'expecting {cid}')
-
-        self.parser.set_filter(self.wait_cid)
-
     def _send(self, ubx_message):
         """
         Send ubx frame to modem via backend driver
@@ -219,96 +230,77 @@ class UbxServerBase_(object):
 
         return res
 
-    def _calm(self):
-        """
-        Calm receiver so that no more frames are forwarded
-        """
-        self.parser.clear_filter()
-
-    def _wait(self, timeout=3.0):
+    def _wait(self):
+        retry_delay_in_s = self.retry_delay_in_ms / 1000.0
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f'waiting {timeout}s for response from listener thread')
+            logger.debug(f'waiting {retry_delay_in_s}s for response')
 
-        time_end = time.time() + timeout
+        time_end = time.time() + retry_delay_in_s
+
+        self.parser.restart()
         while time.time() < time_end:
             data = self._receive()
             if data:
-                # process() places all decoded frames in response_queue
+                # process() places all decoded frames in rx queue
                 self.parser.process(data)
 
             # Check if process could decode one or more frames
             # Loop exists when no more frames are to handle
-            while True:
-                try:
-                    # cid, data = self.response_queue.get(True, timeout)
-                    # Poll queue, no timeout, raises queue.Empty if there is nothing to read
-                    cid, data = self.response_queue.get(True, False)
+            cid, data = self.parser.packet()
+            if cid and data:
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f'got response {cid}')
 
+                if cid != self.cid_crc_error:
                     if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug(f'got response {cid}')
+                        logger.debug(f'received expected frame {cid}')
 
-                    if cid == self.cid_crc_error:
-                        logger.warning("crc error, initiating recovery sequence")
-                        self._recover()
-
-                    # TODO: Required if parser already filters for us?
-                    elif cid in self.wait_cid:
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug(f'received expected frame {cid}')
-
-                        ff = FrameFactory.getInstance()
-                        try:
-                            frame = ff.build_with_data(cid, data)
-                            return frame
-                        except KeyError:
-                            # We can't parse the frame, is it registered()
-                            logger.debug(f'frame not registered, cannot decode: {binascii.hexlify(data)}')
-                    else:
-                        # TODO: must never happen if filter works properly
-                        logger.error(cid)
-                        assert False
-
-                except queue.Empty:
-                    break
+                    ff = FrameFactory.getInstance()
+                    try:
+                        frame = ff.build_with_data(cid, data)
+                        return frame
+                    except KeyError:
+                        # We can't parse the frame, is it registered()
+                        logger.warning(f'frame not registered, cannot decode: {binascii.hexlify(data)}')
+                else:
+                    logger.warning("checksum error in frame, discarding")
+                    self._recover()
 
         logger.warning('timeout...')
 
     def _check_poll(self, request, res):
-        if res:
-            if res.CID == request.CID:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('response matches request')
-                return res
-            else:
-                # Must never happen, as one request is in expected list
-                logger.error(f'invalid frame received {res.CID}')
-                assert False
+        """ Check if response is for requested frame """
+        if res.CID == request.CID:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug('response matches request')
+            return True
+        else:
+            # Must never happen, as only request CID is in expected list
+            logger.error(f'invalid frame received {res.CID}')
 
     def _check_ack_nak(self, request, res):
-        if res:
-            if res.CID == UbxAckAck.CID:
-                ack_cid = UbxCID(res.f.clsId, res.f.msgId)
-                if ack_cid == request.CID:
-                    if logger.isEnabledFor(logging.DEBUG):
-                        logger.debug('ACK matches request')
-                    return res
-                else:
-                    logger.warning(f'ACK {ack_cid} does not match request {request.CID}')
-            elif res.CID == UbxAckNak.CID:
-                logger.warning(f'request {request.CID} rejected, NAK received')
+        if res.CID == UbxAckAck.CID:
+            ack_cid = UbxCID(res.f.clsId, res.f.msgId)
+            if ack_cid == request.CID:
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug('ACK matches request')
+                return "ACK"
             else:
-                # Must never happen. Only ACK/NAK in expected list
-                logger.error(f'invalid frame received {res.CID}')
-                assert False
+                # ACK is for another request
+                logger.warning(f'ACK {ack_cid} does not match request {request.CID}')
+        elif res.CID == UbxAckNak.CID:
+            logger.warning(f'request {request.CID} rejected, NAK received')
+            return "NAK"
+        else:
+            # Must never happen. Only ACK/NAK in expected list
+            logger.error(f'invalid frame received {res.CID}')
 
     def _check_mga(self, request, res):
-        if res:
-            if res.CID == UbxMgaAckData0.CID:
-                if res.f.type == 1:
-                    return True
-                else:
-                    logger.warning(f'MGA message not accepted, error code {res.f.infoCode}')
+        if res.CID == UbxMgaAckData0.CID:
+            if res.f.type == 1:
+                return True
             else:
-                # Must never happen. Only MGA ACK in expected list
-                logger.error(f'invalid frame received {res.CID}')
-                assert False
+                logger.warning(f'MGA message not accepted, error code {res.f.infoCode}')
+        else:
+            # Must never happen. Only MGA ACK in expected list
+            logger.error(f'invalid frame received {res.CID}')

@@ -43,14 +43,14 @@ res = None
 set_esfla_imu = UbxCfgEsflaSet()
 set_esfla_imu.set(UbxCfgEsflaSet.TYPE_VRP_IMU, -10, 38, 30)
 ack_nak = ubx.set(set_esfla_imu)
-print(ack_nak)      # Just print result, could also check for ACK-ACK CID
+print(ack_nak)      # Just print result, no further check
 set_esfla_imu = None
 
 # Construct message with settings for IMU to Antenna distance
 set_esfla_antenna = UbxCfgEsflaSet()
 set_esfla_antenna.set(UbxCfgEsflaSet.TYPE_VRP_Antenna, 25, 0, 95)
 ack_nak = ubx.set(set_esfla_antenna)
-print(ack_nak)
+print(ack_nak)      # Just print result, no further check
 set_esfla_antenna = None
 
 ubx.cleanup()
