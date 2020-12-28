@@ -5,7 +5,7 @@ from ubxlib.types import Fields, Padding, U1, X4
 
 
 class UbxCfgGnss_(UbxFrame):
-    CID = UbxCID(0x06, 0x3E)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x3E)
     NAME = 'UBX-CFG-GNSS'
 
 

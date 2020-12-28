@@ -4,7 +4,7 @@ from ubxlib.types import U2
 
 
 class UbxCfgRate_(UbxFrame):
-    CID = UbxCID(0x06, 0x08)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x08)
     NAME = 'UBX-CFG-RATE'
 
 

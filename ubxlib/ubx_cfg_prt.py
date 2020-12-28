@@ -4,7 +4,7 @@ from ubxlib.types import Padding, U1, X2, X4, U4
 
 
 class UbxCfgPrt_(UbxFrame):
-    CID = UbxCID(0x06, 0x00)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x00)
     NAME = 'UBX-CFG-PRT'
 
     PORTID_Uart = 1

@@ -5,7 +5,7 @@ from ubxlib.types import Padding, U1, X2
 
 class UbxCfgRst_(UbxFrame):
     NAME = 'UBX-CFG-RST'
-    CID = UbxCID(0x06, 0x04)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x04)
 
 
 class UbxCfgRstAction(UbxCfgRst_):

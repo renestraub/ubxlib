@@ -4,7 +4,7 @@ from ubxlib.types import Fields, X1, U1, U4
 
 
 class UbxNavStatus_(UbxFrame):
-    CID = UbxCID(0x01, 0x03)
+    CID = UbxCID(UbxCID.CLASS_NAV, 0x03)
     NAME = 'UBX-NAV-STATUS'
 
 

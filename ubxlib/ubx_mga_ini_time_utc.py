@@ -7,7 +7,7 @@ from ubxlib.types import Padding, U1, U2, U4, X1, I1
 
 
 class UbxMgaIniTimeUtc_(UbxFrame):
-    CID = UbxCID(0x13, 0x40)
+    CID = UbxCID(UbxCID.CLASS_MGA, 0x40)
     NAME = 'UBX-MGA-INI-TIME_UTC'
 
 

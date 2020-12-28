@@ -4,7 +4,7 @@ from ubxlib.types import Padding, CH, U1, I2, I4, X1, X4
 
 
 class UbxCfgNmea_(UbxFrame):
-    CID = UbxCID(0x06, 0x17)
+    CID = UbxCID(UbxCID.CLASS_CFG, 0x17)
     NAME = 'UBX-CFG-NMEA'
 
 
