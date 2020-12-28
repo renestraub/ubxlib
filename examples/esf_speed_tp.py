@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 """
 Sample code to send speed information to modem
- 
+
 NOTE:
 - Configuration needs to be done externally
   CFG-NAV5:
@@ -14,9 +14,9 @@ NOTE:
   - Frequeny: 10
   - Dead-Band: 1.00
   - Speed Error RMS: 0.1
- 
+
 - Requires timepulse connected to GPIO 2_9
- 
+
 Run as module from project root:
 python3 -m examples.esf_speed_tp
 """
@@ -40,14 +40,14 @@ def configure_tp(ubx):
     """
     Configure timepulse to 10 Hz output with 50% duty cycle
     """
-    period = int(1000000 * 1/10)  # 10 Hz
+    period = int(1000000 * 0.1)  # 10 Hz
     pulse_len = int(period / 2)
 
     msg_cfg_tp5_poll = UbxCfgTp5Poll()
     msg_cfg_tp5_poll.f.tpIdx = 1
     tp5 = ubx.poll(msg_cfg_tp5_poll)
     if tp5:
-        tp5.f.flags = 1+2+16    # Active, lock to GPS, isLength
+        tp5.f.flags = 1 + 2 + 16    # Active, lock to GPS, isLength
         tp5.f.freqPeriod = period
         tp5.f.freqPeriodLock = period
         tp5.f.pulseLenRatio = pulse_len
@@ -91,7 +91,7 @@ def io_event_loop(ubx):
                 esf_speed.f.timeTag = time_event_ms
                 esf_speed.f.data = (speed & 0xFFFFFF) | data_type_speed << 24
                 # logger.info(f'sending frame {i}')
-                ubx.send(esf_speed)
+                ubx.fire_and_forget(esf_speed)
 
                 # Update simulated speed information
                 speed += direction

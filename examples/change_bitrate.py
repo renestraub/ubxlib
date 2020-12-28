@@ -62,7 +62,7 @@ if port_cfg:
     # Note: usually we would use ubx.set() to send the request and wait for an ack
     # Unfortunately the modem changes the bitrate immediately so the ACK is not
     # received.
-    ubx.send(port_cfg)
+    ubx.fire_and_forget(port_cfg)
 
     print('done, please re-run to check effect')
 else:

@@ -104,22 +104,6 @@ m = UbxEsfAlgPoll()
 res = ubx.poll(m)
 print(res)
 
-"""
-m = UbxCfgGnssPoll()
-res = ubx.poll(m)
-print(res)
-#res.gps_glonass()
-res.gps_galileo_beidou()
-print(res)
-
-res.pack()
-ubx.expect(UbxAckAck.CID)
-ubx.send(res)
-ubx.wait()
-
-quit(0)
-"""
-
 m = UbxEsfStatusPoll()
 res = ubx.poll(m)
 print(res)
@@ -132,7 +116,7 @@ print(res)
 m = UbxCfgRstAction()
 m.cold_start()
 m.pack()
-ubx.send(m)
+ubx.fire_and_forget(m)
 """
 
 # quit(0)

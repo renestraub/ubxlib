@@ -129,7 +129,7 @@ def set_time(ubx):
     dt = datetime.datetime.utcnow()
     init_time.set_datetime(dt)
 
-    # res = ubx.send(init_time)       # When MGA flow control is disabled
+    # res = ubx.fire_and_forget(init_time)       # When MGA flow control is disabled
     # res = True
     res = ubx.set_mga(init_time)    # When flow control is enabled
     if res:
