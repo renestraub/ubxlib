@@ -67,6 +67,7 @@ class GnssUBlox(UbxServerBase_):
     def _open_port(self):
         self.serial_port.port = self.device_name
         self.serial_port.baudrate = self.baudrate
+        self.serial_port.timeout = 0.1
         self.serial_port.xonxoff = False
         self.serial_port.dsrdtr = False
         self.serial_port.rtscts = False
