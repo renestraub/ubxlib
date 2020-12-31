@@ -75,6 +75,7 @@ class UbxServerBase_(object):
 
         for retry in range(self.max_retries + 1):
             self.parser.empty_queue()
+            self._flush_input()
             res = self._send(frame_poll)
 
             if res:
@@ -115,6 +116,7 @@ class UbxServerBase_(object):
 
         for retry in range(self.max_retries + 1):
             self.parser.empty_queue()
+            self._flush_input()
             self._send(frame_set)
 
             packet = self._wait()
@@ -212,6 +214,15 @@ class UbxServerBase_(object):
         In case of success True shall be returned, False otherwise
         """
         raise NotImplementedError
+
+    def _flush_input(self):
+        """
+        This method can be implemented by a derived backend
+
+        If implemented, it shall flush all pending data in the input/receive
+        queue.
+        """
+        pass
 
     """
     Private methods
