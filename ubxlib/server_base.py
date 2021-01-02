@@ -159,7 +159,7 @@ class UbxServerBase_(object):
         frame_set_mga.pack()
 
         # TODO: Error handling/retry
-        self.parser.empty_queue()
+        self._flush_input()
         self._send(frame_set_mga)
 
         packet = self._wait()
@@ -254,9 +254,10 @@ class UbxServerBase_(object):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f'waiting {retry_delay_in_s}s for response')
 
-        time_end = time.time() + retry_delay_in_s
-
+        self.parser.empty_queue()
         self.parser.restart()
+
+        time_end = time.time() + retry_delay_in_s
         while time.time() < time_end:
             data = self._receive()
             if data:
