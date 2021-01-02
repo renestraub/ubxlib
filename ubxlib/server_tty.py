@@ -50,10 +50,22 @@ class GnssUBlox(UbxServerBase_):
         # time.sleep(5.0)
 
         # Working
-        self.serial_port.reset_output_buffer()
+        # self.serial_port.reset_output_buffer()
+        # self.serial_port.baudrate = 9600
+        # time.sleep(1.0)
+        # self.serial_port.baudrate = self.baudrate
+
+        # Crashing box with 300 bps
+        # current_br = self.serial_port.baudrate
+        # self.serial_port.baudrate = 300
+        # time.sleep(1.0)
+        # self.serial_port.baudrate = current_br
+
+        # Working with 9600
+        current_br = self.serial_port.baudrate
         self.serial_port.baudrate = 9600
         time.sleep(1.0)
-        self.serial_port.baudrate = self.baudrate
+        self.serial_port.baudrate = current_br
 
     def _receive(self):
         assert self.serial_port.is_open
