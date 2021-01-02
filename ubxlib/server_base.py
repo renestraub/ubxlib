@@ -73,8 +73,9 @@ class UbxServerBase_(object):
         # Only a few polling frames required payload, most come w/o.
         frame_poll.pack()
 
+        t_start = time.time()
+
         for retry in range(self.max_retries + 1):
-            self.parser.empty_queue()
             self._flush_input()
             res = self._send(frame_poll)
 
@@ -83,6 +84,8 @@ class UbxServerBase_(object):
                 if packet:
                     res_check = self._check_poll(frame_poll, packet)
                     if res_check:
+                        t_stop = time.time()
+                        logger.debug(f'response received after {(t_stop - t_start):.2f} s')
                         return packet
             else:
                 logger.warning('send failed')
@@ -114,8 +117,9 @@ class UbxServerBase_(object):
         # Get frame data (header, cls, id, len, payload, checksum a/b)
         frame_set.pack()
 
+        t_start = time.time()
+
         for retry in range(self.max_retries + 1):
-            self.parser.empty_queue()
             self._flush_input()
             self._send(frame_set)
 
@@ -123,9 +127,13 @@ class UbxServerBase_(object):
             if packet:
                 res_check = self._check_ack_nak(frame_set, packet)
                 if res_check == 'ACK':
+                    t_stop = time.time()
+                    logger.debug(f'ACK received after {(t_stop - t_start):.2f} s')
                     return packet
                 elif res_check == 'NAK':
-                    return
+                    t_stop = time.time()
+                    logger.debug(f'NAK received after {(t_stop - t_start):.2f} s')
+                    return packet
 
             logger.warning(f'set: timeout, retrying {retry + 1}')
 
