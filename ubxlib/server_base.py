@@ -20,8 +20,8 @@ class UbxServerBase_(object):
         self.parser = UbxParser(self.cid_crc_error)
         self.frame_factory = FrameFactory.getInstance()
         self.wait_cid = None
-        self.max_retries = 5
-        self.retry_delay_in_ms = 3000
+        self.max_retries = 2
+        self.retry_delay_in_ms = 1800
 
     def setup(self):
         # Register ACK-ACK/ACK-NAK frames, as they are used internally by this module
