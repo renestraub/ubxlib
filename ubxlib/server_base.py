@@ -91,6 +91,7 @@ class UbxServerBase_(object):
                 logger.warning('send failed')
 
             logger.warning(f'poll: timeout, retrying {retry + 1}')
+            self._recover()
 
         # TODO:
         # If we get here something truly bad is going on.
@@ -136,6 +137,7 @@ class UbxServerBase_(object):
                     return packet
 
             logger.warning(f'set: timeout, retrying {retry + 1}')
+            self._recover()
 
     def set_mga(self, frame_set_mga):
         """
@@ -284,7 +286,6 @@ class UbxServerBase_(object):
                         logger.warning(f'frame not registered, cannot decode: {binascii.hexlify(data)}')
                 else:
                     logger.warning("checksum error in frame, discarding")
-                    self._recover()
 
         logger.warning('timeout...')
 

@@ -37,15 +37,34 @@ class GnssUBlox(UbxServerBase_):
     def _recover(self):
         assert self.serial_port.is_open
 
-        self._close_port()
-        time.sleep(0.1)
-        self._open_port()
+        logger.warning("server_tty() perfoming recovery")
+        # self._close_port()
+        # time.sleep(0.1)
+        # self._open_port()
+
+        # Working
+        # self.serial_port.reset_output_buffer()
+        # self.serial_port.baudrate = 9600
+        # time.sleep(1.0)
+        # self.serial_port.baudrate = self.baudrate
+        # time.sleep(5.0)
+
+        # Working
+        self.serial_port.reset_output_buffer()
+        self.serial_port.baudrate = 9600
+        time.sleep(1.0)
+        self.serial_port.baudrate = self.baudrate
 
     def _receive(self):
         assert self.serial_port.is_open
 
         # see _open_port() for read timeout
-        data = self.serial_port.read(1024)
+        # data = self.serial_port.read(1)
+        # data = self.serial_port.read(1024)
+        # data = self.serial_port.read(4096)
+
+        # most frames are around 20 .. 32 bytes
+        data = self.serial_port.read(64)
         return data
 
     def _transmit(self, data):
@@ -74,6 +93,7 @@ class GnssUBlox(UbxServerBase_):
 
         try:
             self.serial_port.open()
+            time.sleep(0.1)
             return self.serial_port.is_open
         except SerialException:
             # Can't open serial port
