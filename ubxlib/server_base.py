@@ -19,7 +19,6 @@ class UbxServerBase_(object):
         self.cid_crc_error = UbxCID(0x00, 0x02)
         self.parser = UbxParser(self.cid_crc_error)
         self.frame_factory = FrameFactory.getInstance()
-        self.wait_cid = None
         self.max_retries = 2
         self.retry_delay_in_ms = 1800
 
@@ -30,7 +29,6 @@ class UbxServerBase_(object):
 
         # Register MGA-ACK-DATA0 so we can check result of MGA requests
         self.frame_factory.register(UbxMgaAckData0)
-
         return True
 
     def cleanup(self):
@@ -127,13 +125,6 @@ class UbxServerBase_(object):
             else:
                 logger.warning('poll: send failed')
 
-        # TODO:
-        # If we get here something truly bad is going on.
-        # Typically the logs show a lot of checksum errors.
-        # It is not clear whether these are real or if we just
-        # loose data.
-        # Sometimes even Linux driver errors are visible in the
-        # kernel log
 
     def set(self, frame_set):
         """
@@ -175,7 +166,7 @@ class UbxServerBase_(object):
                 logger.warning(f'set: timeout, retrying {retry + 1}')
                 self._recover()
             else:
-                logger.warning('poll: send failed')
+                logger.warning('set: send failed')
 
 
     def set_mga(self, frame_set_mga):
@@ -235,8 +226,18 @@ class UbxServerBase_(object):
         """
         Perform actions required to recover communication link.
 
-        I.e. close and reopen serial tty.
+        Occassionaly the communication fails with lots of checksum errors.
+        The reason why erraneous frames are suddenly received is not clear.
+        Usually one byte in a frame is just wrong, no bytes are missing or
+        duplicated.
+
+        Possible problems
+         - Overload of receiver
+         - UART driver problem <- likely
+         - Physical interface problem
+
         Must be implemented by derived class.
+        - i.e. close and reopen serial tty.
         """
         raise NotImplementedError
 
