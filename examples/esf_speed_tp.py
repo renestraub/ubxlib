@@ -81,8 +81,8 @@ def io_event_loop(ubx):
     while True:
         ev_lines = lines.event_wait(sec=10)
         if ev_lines:
-            for l in ev_lines:
-                event = l.event_read()
+            for line in ev_lines:
+                event = line.event_read()
                 time_event = event.sec + event.nsec / 1e9
                 time_event_ms = int(time_event * 1000) & 0xFFFFFFFF
 
