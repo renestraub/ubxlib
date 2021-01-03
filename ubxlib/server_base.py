@@ -270,9 +270,6 @@ class UbxServerBase_(object):
             # Loop exists when no more frames are to handle
             cid, data = self.parser.packet()
             if cid:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug(f'got response {cid}')
-
                 if cid != self.cid_crc_error:
                     if logger.isEnabledFor(logging.DEBUG):
                         logger.debug(f'received expected frame {cid}')
@@ -292,19 +289,19 @@ class UbxServerBase_(object):
     def _check_poll(self, request, res):
         """ Check if response is for requested frame """
         if res.CID == request.CID:
-            if logger.isEnabledFor(logging.DEBUG):
-                logger.debug('response matches request')
+            # if logger.isEnabledFor(logging.DEBUG):
+            #     logger.debug('response matches request')
             return True
         else:
             # Must never happen, as only request CID is in expected list
-            logger.error(f'invalid frame received {res.CID}')
+            logger.warning(f'invalid frame received {res.CID}')
 
     def _check_ack_nak(self, request, res):
         if res.CID == UbxAckAck.CID:
             ack_cid = UbxCID(res.f.clsId, res.f.msgId)
             if ack_cid == request.CID:
-                if logger.isEnabledFor(logging.DEBUG):
-                    logger.debug('ACK matches request')
+                # if logger.isEnabledFor(logging.DEBUG):
+                #     logger.debug('ACK matches request')
                 return "ACK"
             else:
                 # ACK is for another request
