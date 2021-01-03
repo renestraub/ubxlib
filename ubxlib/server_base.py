@@ -60,38 +60,72 @@ class UbxServerBase_(object):
 
         - sends the poll message
         - waits for receiver message with same class/id as poll message
+        - if poll is for configuration frame
+          - wait for ACK (or NAK) to poll request (note: ACK is sent after response)
         - retries in case no answer is received
         """
         assert isinstance(frame_poll, UbxFrame)
         logger.debug(f"polling {frame_poll.NAME}")
 
-        # We expect a response frame with the exact same CID
-        wait_cid = frame_poll.CID
-        self.parser.set_filter(wait_cid)
+        # In general we expect a response frame with the exact same CID.
+        # If this is a configuration message, also check ACK frame,
+        if frame_poll.CID.cls == UbxCID.CLASS_CFG:
+            wait_cids = [frame_poll.CID, UbxAckAck.CID, UbxAckNak.CID]
+        else:
+            wait_cids = [frame_poll.CID]
+        self.parser.set_filters(wait_cids)
 
         # Serialize polling frame payload.
         # Only a few polling frames required payload, most come w/o.
         frame_poll.pack()
-
-        t_start = time.time()
 
         for retry in range(self.max_retries + 1):
             self._flush_input()
             res = self._send(frame_poll)
 
             if res:
-                packet = self._wait()
-                if packet:
-                    res_check = self._check_poll(frame_poll, packet)
-                    if res_check:
-                        t_stop = time.time()
-                        logger.debug(f'response received after {(t_stop - t_start):.2f} s')
-                        return packet
-            else:
-                logger.warning('send failed')
+                state = 'wait-response'
+                response = None
+                t_start = time.time()
 
-            logger.warning(f'poll: timeout, retrying {retry + 1}')
-            self._recover()
+                self.parser.empty_queue()
+                self.parser.restart()
+
+                while state != "ok" and state != 'timeout':
+                    packet = self._wait()
+                    if packet:
+                        t_duration = time.time() - t_start
+                        if state == 'wait-response':
+                            check = self._check_poll(frame_poll, packet)
+                            if check:
+                                logger.debug(f'response received after {t_duration:.2f} s')
+                                response = packet
+                                if frame_poll.CID.cls == UbxCID.CLASS_CFG:
+                                    # Only wait for ack if this is a CFG request ..
+                                    state = 'wait-ack'
+                                else:
+                                    # .. otherwise we are done here
+                                    state = 'ok'
+                        elif state == 'wait-ack':
+                            check = self._check_ack_nak(frame_poll, packet)
+                            if check == 'ACK':
+                                logger.debug(f'ACK received after {t_duration:.2f} s')
+                                state = 'ok'
+                            elif check == 'NAK':
+                                # Not sure why we should ever get a NAK frame
+                                logger.warning(f"NAK received\n{packet}")
+                    else:
+                        state = 'timeout'
+                        break
+
+                if state == 'ok':
+                    assert response
+                    return response
+                else:
+                    logger.warning(f'poll: timeout, retrying {retry + 1}')
+                    self._recover()
+            else:
+                logger.warning('poll: send failed')
 
         # TODO:
         # If we get here something truly bad is going on.
@@ -118,26 +152,31 @@ class UbxServerBase_(object):
         # Get frame data (header, cls, id, len, payload, checksum a/b)
         frame_set.pack()
 
-        t_start = time.time()
-
         for retry in range(self.max_retries + 1):
             self._flush_input()
-            self._send(frame_set)
+            res = self._send(frame_set)
+            if res:
+                t_start = time.time()
 
-            packet = self._wait()
-            if packet:
-                res_check = self._check_ack_nak(frame_set, packet)
-                if res_check == 'ACK':
-                    t_stop = time.time()
-                    logger.debug(f'ACK received after {(t_stop - t_start):.2f} s')
-                    return packet
-                elif res_check == 'NAK':
-                    t_stop = time.time()
-                    logger.debug(f'NAK received after {(t_stop - t_start):.2f} s')
-                    return packet
+                self.parser.empty_queue()
+                self.parser.restart()
 
-            logger.warning(f'set: timeout, retrying {retry + 1}')
-            self._recover()
+                packet = self._wait()
+                if packet:
+                    t_duration = time.time() - t_start
+                    res_check = self._check_ack_nak(frame_set, packet)
+                    if res_check == 'ACK':
+                        logger.debug(f'ACK received after {t_duration:.2f} s')
+                        return packet
+                    elif res_check == 'NAK':
+                        logger.debug(f'NAK received after {t_duration:.2f} s')
+                        return packet
+
+                logger.warning(f'set: timeout, retrying {retry + 1}')
+                self._recover()
+            else:
+                logger.warning('poll: send failed')
+
 
     def set_mga(self, frame_set_mga):
         """
@@ -256,8 +295,8 @@ class UbxServerBase_(object):
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f'waiting {retry_delay_in_s}s for response')
 
-        self.parser.empty_queue()
-        self.parser.restart()
+        # self.parser.empty_queue()
+        # self.parser.restart()
 
         time_end = time.time() + retry_delay_in_s
         while time.time() < time_end:
