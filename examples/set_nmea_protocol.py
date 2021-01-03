@@ -8,21 +8,24 @@ python3 -m examples.set_nmea_protocol
 import logging
 
 from ubxlib.server import GnssUBlox
-# from ubxlib.server_tty import GnssUBlox     # TTY direct backend
+from ubxlib.server_tty import GnssUBlox as GnssUBloxTTY    # TTY direct backend
 from ubxlib.ubx_cfg_nmea import UbxCfgNmeaPoll, UbxCfgNmea
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
-# logger.setLevel(logging.INFO)
+logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
 
 
 # Create UBX library
-ubx = GnssUBlox()
-# ubx = GnssUBlox('/dev/gnss0', 115200)
-ubx.setup()
+# ubx = GnssUBlox()
+ubx = GnssUBloxTTY('/dev/gnss0', 115200)
+res = ubx.setup()
+if not res:
+    print('Cannot setup library')
+    quit(10)
 
 # Register the frame types we use
 ubx.register_frame(UbxCfgNmea)
