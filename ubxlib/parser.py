@@ -139,7 +139,7 @@ class UbxParser(object):
                         if logger.isEnabledFor(logging.DEBUG):
                             logger.debug(f'no match - dropping {cid}, {self.msg_len} bytes')
                 else:
-                    logger.warning(f'checksum error in frame, discarding')
+                    logger.warning('checksum error in frame, discarding')
                     logger.warning(f'{self.msg_class:02x} {self.msg_id:02x} {binascii.hexlify(self.msg_data)}')
 
                     crc_error_message = (self.crc_error_cid, None)

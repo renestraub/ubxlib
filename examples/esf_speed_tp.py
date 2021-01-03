@@ -22,7 +22,6 @@ python3 -m examples.esf_speed_tp
 """
 import logging
 import os
-import time
 import gpiod
 
 from ubxlib.server import GnssUBlox

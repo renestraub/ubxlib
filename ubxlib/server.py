@@ -1,13 +1,8 @@
 import binascii
 import json
 import logging
-import queue
 import socket
-import time
 
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.frame_factory import FrameFactory
 from ubxlib.server_base import UbxServerBase_
 
 logger = logging.getLogger(__name__)
@@ -23,7 +18,7 @@ class GnssUBlox(UbxServerBase_):
         self.device_name = device_name
         self.selected_device = None
         self.cmd_header = None
-        self.connect_msg = f'?WATCH={{"enable":true,"raw":2}}'.encode()
+        self.connect_msg = '?WATCH={{"enable":true,"raw":2}}'.encode()
         self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.enabled = False
 
@@ -120,7 +115,7 @@ class GnssUBlox(UbxServerBase_):
         self.listen_sock.send(self.connect_msg)
 
         # TODO: Timeout check for response!
-        while not self.enabled: 
+        while not self.enabled:
             try:
                 data = self.listen_sock.recv(8192)
                 if data:
