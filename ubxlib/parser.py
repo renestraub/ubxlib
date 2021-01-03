@@ -70,82 +70,105 @@ class UbxParser(object):
 
     def process(self, data):
         for d in data:
-            if self.state == __class__.State.INIT:
-                if d == UbxFrame.SYNC_1:
-                    self.state = __class__.State.SYNC
+            self._process_byte(d)
 
-            elif self.state == __class__.State.SYNC:
-                if d == UbxFrame.SYNC_2:
-                    self._reset()
-                    self.state = __class__.State.CLASS
-                else:
-                    self.state = __class__.State.INIT
+    def _process_byte(self, data):
+        if self.state == __class__.State.INIT:
+            self._state_init(data)
+        elif self.state == __class__.State.SYNC:
+            self._state_sync(data)
+        elif self.state == __class__.State.CLASS:
+            self._state_class(data)
+        elif self.state == __class__.State.ID:
+            self._state_id(data)
+        elif self.state == __class__.State.LEN1:
+            self._state_len1(data)
+        elif self.state == __class__.State.LEN2:
+            self._state_len2(data)
+        elif self.state == __class__.State.DATA:
+            self._state_data(data)
+        elif self.state == __class__.State.CRC1:
+            self._state_crc1(data)
+        elif self.state == __class__.State.CRC2:
+            self._state_crc2(data)
 
-            elif self.state == __class__.State.CLASS:
-                self.msg_class = d
-                self.checksum.add(d)
-                self.state = __class__.State.ID
+    def _state_init(self, d):
+        if d == UbxFrame.SYNC_1:
+            self.state = __class__.State.SYNC
 
-            elif self.state == __class__.State.ID:
-                self.msg_id = d
-                self.checksum.add(d)
-                self.state = __class__.State.LEN1
+    def _state_sync(self, d):
+        if d == UbxFrame.SYNC_2:
+            self._reset()
+            self.state = __class__.State.CLASS
+        else:
+            self.state = __class__.State.INIT
 
-            elif self.state == __class__.State.LEN1:
-                self.msg_len = d
-                self.checksum.add(d)
-                self.state = __class__.State.LEN2
+    def _state_class(self, d):
+        # TODO: Could add check for SYNC_1, SYNC_2 here, as both are not valid classes or IDs
+        self.msg_class = d
+        self.checksum.add(d)
+        self.state = __class__.State.ID
 
-            elif self.state == __class__.State.LEN2:
-                self.msg_len = self.msg_len + (d * 256)
-                self.checksum.add(d)
+    def _state_id(self, d):
+        self.msg_id = d
+        self.checksum.add(d)
+        self.state = __class__.State.LEN1
 
-                if self.msg_len == 0:
-                    self.state = __class__.State.CRC1
-                elif self.msg_len > __class__.MAX_MESSAGE_LENGTH:
-                    logger.warning(f'invalid msg len {self.msg_len}')
-                    self.state = __class__.State.INIT
-                else:
-                    self.ofs = 0
-                    self.state = __class__.State.DATA
+    def _state_len1(self, d):
+        self.msg_len = d
+        self.checksum.add(d)
+        self.state = __class__.State.LEN2
 
-            elif self.state == __class__.State.DATA:
-                self.msg_data.append(d)
-                self.checksum.add(d)
-                self.ofs += 1
+    def _state_len2(self, d):
+        self.msg_len = self.msg_len + (d * 256)
+        self.checksum.add(d)
 
-                if self.ofs == self.msg_len:
-                    self.state = __class__.State.CRC1
+        if self.msg_len == 0:
+            self.state = __class__.State.CRC1
+        elif self.msg_len > __class__.MAX_MESSAGE_LENGTH:
+            logger.warning(f'invalid msg len {self.msg_len}')
+            self.state = __class__.State.INIT
+        else:
+            self.ofs = 0
+            self.state = __class__.State.DATA
 
-            elif self.state == __class__.State.CRC1:
-                self.cka = d
-                self.state = __class__.State.CRC2
+    def _state_data(self, d):
+        self.msg_data.append(d)
+        self.checksum.add(d)
+        self.ofs += 1
 
-            elif self.state == __class__.State.CRC2:
-                self.ckb = d
+        if self.ofs == self.msg_len:
+            self.state = __class__.State.CRC1
 
-                # if checksum matches received checksum ..
-                if self.checksum.matches(self.cka, self.ckb):
-                    self.frames_rx += 1
+    def _state_crc1(self, d):
+        self.cka = d
+        self.state = __class__.State.CRC2
 
-                    # .. and frame passes filter ..
-                    cid = UbxCID(self.msg_class, self.msg_id)
+    def _state_crc2(self, d):
+        self.ckb = d
 
-                    if cid in self.wait_cids:
-                        # .. queue packet (CID and data)
-                        packet = (cid, self.msg_data)
-                        self.rx_queue.append(packet)
-                    else:
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug(f'no match - dropping {cid}, {self.msg_len} bytes')
-                else:
-                    logger.warning(f'checksum error in frame, discarding')
-                    logger.warning(f'{self.msg_class:02x} {self.msg_id:02x} {binascii.hexlify(self.msg_data)}')
+        # if checksum matches received checksum ..
+        if self.checksum.matches(self.cka, self.ckb):
+            self.frames_rx += 1
 
-                    crc_error_message = (self.crc_error_cid, None)
-                    self.rx_queue.append(crc_error_message)
+            # .. and frame passes filter ..
+            cid = UbxCID(self.msg_class, self.msg_id)
 
-                self.state = __class__.State.INIT
+            if cid in self.wait_cids:
+                # .. queue packet (CID and data)
+                packet = (cid, self.msg_data)
+                self.rx_queue.append(packet)
+            else:
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(f'no match - dropping {cid}, {self.msg_len} bytes')
+        else:
+            logger.warning('checksum error in frame, discarding')
+            logger.warning(f'{self.msg_class:02x} {self.msg_id:02x} {binascii.hexlify(self.msg_data)}')
+
+            crc_error_message = (self.crc_error_cid, None)
+            self.rx_queue.append(crc_error_message)
+
+        self.state = __class__.State.INIT
 
     def _reset(self):
         self.msg_class = 0

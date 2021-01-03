@@ -1,4 +1,3 @@
-import pytest
 from ubxlib.cid import UbxCID
 from ubxlib.parser import UbxParser
 

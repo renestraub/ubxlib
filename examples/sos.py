@@ -63,7 +63,7 @@ def check_sos_state(ubx):
             state = res.f.response
             logger.info(f'state: {responses[res.f.response]}')
         else:
-            logger.warning(f'state: <unknown>')
+            logger.warning('state: <unknown>')
 
     return state
 

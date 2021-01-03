@@ -16,6 +16,7 @@ def frame_factory():
     # Next run needs a fresh factory object -> destroy singleton
     FrameFactory.destroy()
 
+
 class TestFactory:
     def test_singleton(self):
         ff1 = FrameFactory.getInstance()
@@ -31,7 +32,7 @@ class TestFactory:
         frame_factory.register(UbxAckAck)
 
         with pytest.raises(KeyError):
-            m = frame_factory.build(UbxCID(99, 99))
+            frame_factory.build(UbxCID(99, 99))
 
     def test_multiple_registrations(self, frame_factory):
         frame_factory.register(UbxAckAck)

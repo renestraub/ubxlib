@@ -125,7 +125,6 @@ class UbxServerBase_(object):
             else:
                 logger.warning('poll: send failed')
 
-
     def set(self, frame_set):
         """
         Send a set message to modem and wait for acknowledge
@@ -167,7 +166,6 @@ class UbxServerBase_(object):
                     self._recover()
             else:
                 logger.warning('set: send failed')
-
 
     def set_mga(self, frame_set_mga):
         """
@@ -299,7 +297,7 @@ class UbxServerBase_(object):
         msg_in_binary = ubx_message.to_bytes()
         res = self._transmit(msg_in_binary)
         if not res:
-            logger.warning(f'command could not be sent')
+            logger.warning('command could not be sent')
 
         return res
 

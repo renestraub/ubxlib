@@ -1,5 +1,3 @@
-import struct
-
 from ubxlib.checksum import Checksum
 from ubxlib.cid import UbxCID
 from ubxlib.types import Fields

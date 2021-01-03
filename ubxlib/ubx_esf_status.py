@@ -139,8 +139,7 @@ class X1_SensStatus1(X1):
         return len
 
     def __str__(self):
-        # TODO: Why f-string
-        res = self.name + f': '
+        res = self.name + ': '
         if self.type < len(X1_SensStatus1.sensor_types):
             res += f'{X1_SensStatus1.sensor_types[self.type]}, '
         else:

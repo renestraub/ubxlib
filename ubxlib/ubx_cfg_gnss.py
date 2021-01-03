@@ -1,5 +1,4 @@
 from ubxlib.cid import UbxCID
-from ubxlib.frame_factory import FrameFactory
 from ubxlib.frame import UbxFrame
 from ubxlib.types import Fields, Padding, U1, X4
 
