@@ -155,16 +155,16 @@ class UbxServerBase_(object):
                 packet = self._wait()
                 if packet:
                     t_duration = time.time() - t_start
-                    res_check = self._check_ack_nak(frame_set, packet)
-                    if res_check == 'ACK':
+                    check = self._check_ack_nak(frame_set, packet)
+                    if check == 'ACK':
                         logger.debug(f'ACK received after {t_duration:.2f} s')
                         return packet
-                    elif res_check == 'NAK':
+                    elif check == 'NAK':
                         logger.debug(f'NAK received after {t_duration:.2f} s')
                         return packet
-
-                logger.warning(f'set: timeout, retrying {retry + 1}')
-                self._recover()
+                else:
+                    logger.warning(f'set: timeout, retrying {retry + 1}')
+                    self._recover()
             else:
                 logger.warning('set: send failed')
 
@@ -190,15 +190,27 @@ class UbxServerBase_(object):
         # Get frame data (header, cls, id, len, payload, checksum a/b)
         frame_set_mga.pack()
 
-        # TODO: Error handling/retry
-        self._flush_input()
-        self._send(frame_set_mga)
+        for retry in range(self.max_retries + 1):
+            self._flush_input()
+            res = self._send(frame_set_mga)
+            if res:
+                t_start = time.time()
 
-        packet = self._wait()
-        if packet:
-            res_check = self._check_mga(frame_set_mga, packet)
-            if res_check:
-                return packet
+                self.parser.empty_queue()
+                self.parser.restart()
+
+                packet = self._wait()
+                if packet:
+                    t_duration = time.time() - t_start
+                    check = self._check_mga(frame_set_mga, packet)
+                    if check:
+                        logger.debug(f'MGA-ACK received after {t_duration:.2f} s')
+                        return packet
+                else:
+                    logger.warning(f'set_mga: timeout, retrying {retry + 1}')
+                    self._recover()
+            else:
+                logger.warning('set_mga: send failed')
 
     def fire_and_forget(self, frame_set):
         """
