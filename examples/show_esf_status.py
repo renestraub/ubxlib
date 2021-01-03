@@ -9,6 +9,7 @@ import logging
 import time
 
 from ubxlib.server import GnssUBlox
+from ubxlib.server_tty import GnssUBlox as GnssUBloxTTY    # TTY direct backend
 from ubxlib.ubx_esf_status import UbxEsfStatusPoll, UbxEsfStatus
 
 
@@ -16,12 +17,17 @@ FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
 logger.setLevel(logging.INFO)
-# logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 # Create UBX library
-ubx = GnssUBlox()
-ubx.setup()
+# ubx = GnssUBlox()
+ubx = GnssUBloxTTY('/dev/gnss0', 115200)
+res = ubx.setup()
+if not res:
+    print('Cannot setup library')
+    quit(10)
+
 
 # Register the frame types we use
 ubx.register_frame(UbxEsfStatus)

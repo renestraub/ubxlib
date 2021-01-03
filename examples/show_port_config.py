@@ -8,6 +8,7 @@ python3 -m examples.show_port_config
 import logging
 
 from ubxlib.server import GnssUBlox
+from ubxlib.server_tty import GnssUBlox as GnssUBloxTTY    # TTY direct backend
 from ubxlib.ubx_cfg_prt import UbxCfgPrtPoll, UbxCfgPrtUart
 
 
@@ -19,8 +20,13 @@ logger.setLevel(logging.INFO)
 
 
 # Create UBX library
-ubx = GnssUBlox()
-ubx.setup()
+# ubx = GnssUBlox()
+ubx = GnssUBloxTTY('/dev/gnss0', 115200)
+res = ubx.setup()
+if not res:
+    print('Cannot setup library')
+    quit(10)
+
 
 # Register the frame types we use
 ubx.register_frame(UbxCfgPrtUart)

@@ -25,7 +25,10 @@ logger.setLevel(logging.INFO)
 # Create UBX library
 # Note: tty and baudrate must match current receiver configuration
 ubx = GnssUBlox('/dev/gnss0', 115200)
-ubx.setup()
+res = ubx.setup()
+if not res:
+    print('Cannot setup library')
+    quit(10)
 
 # Register the frame types we use
 ubx.register_frame(UbxMonVer)
