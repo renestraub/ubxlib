@@ -1,6 +1,5 @@
 # import binascii
 import logging
-import time
 
 from serial import Serial
 from serial.serialutil import SerialException

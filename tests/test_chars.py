@@ -36,12 +36,12 @@ class TestChars:
         assert data == bytearray.fromhex('31 32 33 34 00 00')
 
     def test_chars_too_long(self):
-            u = Fields()
-            u.add(CH(6, 'string'))
-            u.string = '1234567'    # One byte too long
+        u = Fields()
+        u.add(CH(6, 'string'))
+        u.string = '1234567'    # One byte too long
 
-            with pytest.raises(ValueError):
-                u.pack()
+        with pytest.raises(ValueError):
+            u.pack()
 
     def test_chars_invalid_length(self):
         u = Fields()

@@ -107,7 +107,7 @@ class U1_LeverArmType(U1):
         super().__init__(name)
 
     def __str__(self):
-        res = self.name + f': '
+        res = self.name + ': '
         if self.value < len(U1_LeverArmType.type_names):
             res += f'{U1_LeverArmType.type_names[self.value]} ({self.value})'
         else:

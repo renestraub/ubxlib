@@ -1,10 +1,8 @@
 #!/usr/bin/python3
 
-import binascii
 import logging
 import time
 
-from ubxlib.cid import UbxCID
 # from ubxlib.server import GnssUBlox
 from ubxlib.server_tty import GnssUBlox     # TTY direct backend
 from ubxlib.ubx_ack import UbxAckAck

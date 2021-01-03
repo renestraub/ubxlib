@@ -48,7 +48,7 @@ class FrameFactory(object):
         # will assert.
         if frame_class.CID in self.__frames:
             logger.warning(f'trying to register {frame_class} multiple times')
-            logger.warning(f'future releases will throw an Exception')
+            logger.warning('future releases will throw an Exception')
             return
 
         self.__frames[frame_class.CID] = frame_class
