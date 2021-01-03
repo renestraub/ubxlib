@@ -38,51 +38,27 @@ class GnssUBlox(UbxServerBase_):
         assert self.serial_port.is_open
 
         logger.warning("server_tty() perfoming recovery")
-        # self._close_port()
-        # time.sleep(0.1)
-        # self._open_port()
 
-        # Working
-        # self.serial_port.reset_output_buffer()
-        # self.serial_port.baudrate = 9600
-        # time.sleep(1.0)
-        # self.serial_port.baudrate = self.baudrate
-        # time.sleep(5.0)
-
-        # Working
-        # self.serial_port.reset_output_buffer()
-        # self.serial_port.baudrate = 9600
-        # time.sleep(1.0)
-        # self.serial_port.baudrate = self.baudrate
-
-        # Crashing box with 300 bps
-        # current_br = self.serial_port.baudrate
-        # self.serial_port.baudrate = 300
-        # time.sleep(1.0)
-        # self.serial_port.baudrate = current_br
-
-        # Working
-        # current_br = self.serial_port.baudrate
-        # self.serial_port.baudrate = 9600
-        # time.sleep(1.0)
-        # self.serial_port.baudrate = current_br
-
-        # Working
+        # Recovery method for AM3352 problems
+        # - Change bitrate while port is open
+        #   This seems to reinitialize / fix a problem with MDR register
+        # Reference:
+        #   SPRZ360I AM335x Errata
+        #   Advisory 1.0.35 - UART: Transactions to MDR1 Register May Cause Undesired Effect
+        #                     on UART Operation
         current_br = self.serial_port.baudrate
         self.serial_port.baudrate = 9600
-        time.sleep(0.1)
         self.serial_port.baudrate = current_br
 
     def _receive(self):
         assert self.serial_port.is_open
 
+        # Read single bytes only, so that parser can stop at least byte
+        # of a frame. When reading large blocks, read() blocks until timeout
+        # when no (more) data arrives.
         # see _open_port() for read timeout
-        # data = self.serial_port.read(1)
-        # data = self.serial_port.read(1024)
-        # data = self.serial_port.read(4096)
+        data = self.serial_port.read(1)
 
-        # most frames are around 20 .. 32 bytes
-        data = self.serial_port.read(64)
         return data
 
     def _transmit(self, data):
@@ -111,10 +87,9 @@ class GnssUBlox(UbxServerBase_):
 
         try:
             self.serial_port.open()
-            time.sleep(0.1)
             return self.serial_port.is_open
         except SerialException:
-            # Can't open serial port
+            # Can't open serial port, just fall through to return None
             pass
 
     def _close_port(self):
