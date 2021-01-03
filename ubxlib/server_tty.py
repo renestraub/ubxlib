@@ -61,10 +61,16 @@ class GnssUBlox(UbxServerBase_):
         # time.sleep(1.0)
         # self.serial_port.baudrate = current_br
 
-        # Working with 9600
+        # Working
+        # current_br = self.serial_port.baudrate
+        # self.serial_port.baudrate = 9600
+        # time.sleep(1.0)
+        # self.serial_port.baudrate = current_br
+
+        # Working
         current_br = self.serial_port.baudrate
         self.serial_port.baudrate = 9600
-        time.sleep(1.0)
+        time.sleep(0.1)
         self.serial_port.baudrate = current_br
 
     def _receive(self):
