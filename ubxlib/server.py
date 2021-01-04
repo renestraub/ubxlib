@@ -18,7 +18,7 @@ class GnssUBlox(UbxServerBase_):
         self.device_name = device_name
         self.selected_device = None
         self.cmd_header = None
-        self.connect_msg = '?WATCH={{"enable":true,"raw":2}}'.encode()
+        self.connect_msg = '?WATCH={"enable":true,"raw":2}'.encode()
         self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.enabled = False
 
@@ -47,7 +47,7 @@ class GnssUBlox(UbxServerBase_):
     def _receive(self):
         # Check if there is data, forward to parser to process
         try:
-            data = self.listen_sock.recv(8192)
+            data = self.listen_sock.recv(128)
             if data:
                 return data
         except socket.timeout:
@@ -61,7 +61,7 @@ class GnssUBlox(UbxServerBase_):
         try:
             self.control_sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             self.control_sock.connect(GnssUBlox.gpsd_control_socket)
-            self.control_sock.settimeout(0.1)
+            self.control_sock.settimeout(0.020)
 
             msg_in_ascii = binascii.hexlify(data)
 
