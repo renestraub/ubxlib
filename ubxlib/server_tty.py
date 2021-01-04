@@ -36,7 +36,7 @@ class GnssUBlox(UbxServerBase_):
     def _recover(self):
         assert self.serial_port.is_open
 
-        logger.warning("server_tty() perfoming recovery")
+        logger.warning("server_tty() performing recovery")
 
         # Recovery method for AM3352 problems
         # - Change bitrate while port is open
