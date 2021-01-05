@@ -78,6 +78,9 @@ class UbxServerBase_(object):
         frame_poll.pack()
 
         for retry in range(self.max_retries + 1):
+            if retry != 0:
+                logger.warning(f'poll: timeout, retrying {retry}')
+
             self._flush_input()
             res = self._send(frame_poll)
 
@@ -120,7 +123,6 @@ class UbxServerBase_(object):
                     assert response
                     return response
                 else:
-                    logger.warning(f'poll: timeout, retrying {retry + 1}')
                     self._recover()
             else:
                 logger.warning('poll: send failed')
@@ -143,6 +145,9 @@ class UbxServerBase_(object):
         frame_set.pack()
 
         for retry in range(self.max_retries + 1):
+            if retry != 0:
+                logger.warning(f'set: timeout, retrying {retry}')
+
             self._flush_input()
             res = self._send(frame_set)
             if res:
@@ -162,7 +167,6 @@ class UbxServerBase_(object):
                         logger.debug(f'NAK received after {t_duration:.2f} s')
                         return packet
                 else:
-                    logger.warning(f'set: timeout, retrying {retry + 1}')
                     self._recover()
             else:
                 logger.warning('set: send failed')
@@ -189,6 +193,9 @@ class UbxServerBase_(object):
         frame_set_mga.pack()
 
         for retry in range(self.max_retries + 1):
+            if retry != 0:
+                logger.warning(f'set_mga: timeout, retrying {retry}')
+
             self._flush_input()
             res = self._send(frame_set_mga)
             if res:
@@ -205,7 +212,6 @@ class UbxServerBase_(object):
                         logger.debug(f'MGA-ACK received after {t_duration:.2f} s')
                         return packet
                 else:
-                    logger.warning(f'set_mga: timeout, retrying {retry + 1}')
                     self._recover()
             else:
                 logger.warning('set_mga: send failed')
