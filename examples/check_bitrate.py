@@ -7,7 +7,15 @@ Theory of operation
 - In case the proper bitrate is selected, the query will succeed
   and the reported bitrate should match.
 - If no response is received the next bitrate is tried.
-- To save time the number of retries/timeout is reduced.
+- To save time the number of retries is reduced compared to normal
+  operation.
+- The maximum timeout is set to 1.5 seconds. Empirical tests have
+  shown a maximum response times of:
+  -   9600 bps : 1.36 s
+  -  19200 bps : 1.42 s
+  -  38400 bps : 1.46 s
+  -  57600 bps : 1.38 s
+  - 115200 bps : 1.40 s
 
 In a real world application the expected bitrate (115200) should
 be first in the list, followed by factory default value (9600).
@@ -18,6 +26,7 @@ to the modem w/o gpsd.
 Run as module from project root:
 python3 -m examples.check_bitrate
 """
+import argparse
 import logging
 
 from ubxlib.server_tty import GnssUBlox
@@ -29,8 +38,8 @@ BIT_RATES = [9600, 19200, 38400, 57600, 115200]
 
 
 def detect_bitrate_active(ubx):
-    retries = ubx.set_retries(2)
-    delay = ubx.set_retry_delay(250)
+    retries = ubx.set_retries(1)
+    delay = ubx.set_retry_delay(1500)
 
     for baud in BIT_RATES:
         logger.info(f'checking {baud} bps')
@@ -49,7 +58,7 @@ def detect_bitrate_active(ubx):
                 logger.debug('bitrate matches')
                 return baud
             else:
-                logger.debug('bitrate reported ({res.f.baudrate} bps) does not match')
+                logger.warning('bitrate reported ({res.f.baudrate} bps) does not match')
 
         logger.debug(f'bitrate {baud} not working')
 
@@ -60,14 +69,33 @@ def detect_bitrate_active(ubx):
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
-logger.setLevel(logging.INFO)
-# logger.setLevel(logging.DEBUG)
 
-ubx = GnssUBlox('/dev/gnss0')
-ubx.setup()
-ubx.register_frame(UbxCfgPrtUart)
 
-baud = detect_bitrate_active(ubx)
-print(f'baudrate is {baud} bps')
+def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser(
+        description='Detects current UART bitrate of GNSS modem')
 
-ubx.cleanup()
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        dest='verbose',
+        help='be verbose, show debug output')
+
+    args = parser.parse_args()
+    logger.setLevel(logging.INFO)
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+
+    ubx = GnssUBlox('/dev/gnss0')
+    ubx.setup()
+    ubx.register_frame(UbxCfgPrtUart)
+
+    baud = detect_bitrate_active(ubx)
+    print(f'baudrate is {baud} bps')
+
+    ubx.cleanup()
+
+
+if __name__ == '__main__':
+    main()
