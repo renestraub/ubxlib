@@ -154,7 +154,7 @@ class UbxParser(object):
             # .. and frame passes filter ..
             cid = UbxCID(self.msg_class, self.msg_id)
 
-            if cid in self.wait_cids:
+            if self.wait_cids and cid in self.wait_cids:
                 # .. queue packet (CID and data)
                 packet = (cid, self.msg_data)
                 self.rx_queue.append(packet)
