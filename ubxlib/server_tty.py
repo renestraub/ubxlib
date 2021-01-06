@@ -1,9 +1,12 @@
 # import binascii
 import logging
+import time
 
 from serial import Serial
 from serial.serialutil import SerialException
 
+from ubxlib.parser import UbxParser
+from ubxlib.parser_nmea import NmeaParser
 from ubxlib.server_base import UbxServerBase_
 
 logger = logging.getLogger(__name__)
@@ -29,6 +32,40 @@ class GnssUBlox(UbxServerBase_):
 
     def set_baudrate(self, baud):
         self.serial_port.baudrate = baud
+
+    def scan(self, interval_in_s=1.500):
+        """
+        Scan for ubx or nmea frames
+
+        The method returns True if at least two frames were decoded during the
+        specified interval.
+
+        Worst case scan interval has bean empirically determined to 1.2 s
+        """
+        parser_ubx = UbxParser(None)
+        parser_nmea = NmeaParser()
+
+        ubx_frames = parser_ubx.frames_rx
+        nmea_frames = parser_nmea.frames_rx
+
+        self._flush_input()
+
+        t_start = time.time()
+        t_end = t_start + interval_in_s
+        while time.time() < t_end:
+            data = self._receive()
+            if data:
+                t_duration = time.time() - t_start
+
+                parser_ubx.process(data)
+                if parser_ubx.frames_rx - ubx_frames >= 2:
+                    logger.info(f'ubx frames received within {t_duration:.3f} s')
+                    return True
+
+                parser_nmea.process(data)
+                if parser_nmea.frames_rx - nmea_frames >= 2:
+                    logger.info(f'nmea frames received within {t_duration:.3f} s')
+                    return True
 
     """
     Base class implementation
