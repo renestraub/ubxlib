@@ -5,7 +5,7 @@ import time
 from serial import Serial
 from serial.serialutil import SerialException
 
-from ubxlib.parser import UbxParser
+from ubxlib.parser_ubx import UbxParser
 from ubxlib.parser_nmea import NmeaParser
 from ubxlib.server_base import UbxServerBase_
 

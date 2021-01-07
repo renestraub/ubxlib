@@ -5,7 +5,7 @@ import time
 from ubxlib.cid import UbxCID
 from ubxlib.frame import UbxFrame
 from ubxlib.frame_factory import FrameFactory
-from ubxlib.parser import UbxParser
+from ubxlib.parser_ubx import UbxParser
 from ubxlib.ubx_ack import UbxAckAck, UbxAckNak
 from ubxlib.ubx_mga_ack_data0 import UbxMgaAckData0
 
@@ -127,6 +127,8 @@ class UbxServerBase_(object):
             else:
                 logger.warning('poll: send failed')
 
+        # input("break")
+
     def set(self, frame_set):
         """
         Send a set message to modem and wait for acknowledge
@@ -170,6 +172,8 @@ class UbxServerBase_(object):
                     self._recover()
             else:
                 logger.warning('set: send failed')
+
+        input("break")
 
     def set_mga(self, frame_set_mga):
         """
@@ -215,6 +219,8 @@ class UbxServerBase_(object):
                     self._recover()
             else:
                 logger.warning('set_mga: send failed')
+
+        input("break")
 
     def fire_and_forget(self, frame_set):
         """

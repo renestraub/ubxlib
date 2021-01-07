@@ -1,5 +1,5 @@
 from ubxlib.cid import UbxCID
-from ubxlib.parser import UbxParser
+from ubxlib.parser_ubx import UbxParser
 
 
 class TestParser:
