@@ -40,7 +40,7 @@ class GnssUBlox(UbxServerBase_):
         The method returns True if at least two frames were decoded during the
         specified interval.
 
-        Worst case scan interval has bean empirically determined to 1.2 s
+        Worst case scan interval has been empirically determined to 1.2 s
         """
         parser_ubx = UbxParser(None)
         parser_nmea = NmeaParser()
@@ -89,7 +89,7 @@ class GnssUBlox(UbxServerBase_):
     def _receive(self):
         assert self.serial_port.is_open
 
-        # Read single bytes only, so that parser can stop at least byte
+        # Read single bytes only, so that parser can stop at last byte
         # of a frame. When reading large blocks, read() blocks until timeout
         # when no (more) data arrives.
         # see _open_port() for read timeout
