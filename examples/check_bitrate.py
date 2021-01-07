@@ -61,7 +61,8 @@ from ubxlib.ubx_cfg_prt import UbxCfgPrtPoll, UbxCfgPrtUart
 
 TTY = '/dev/gnss0'
 # BIT_RATES = [9600, 19200, 38400, 57600, 115200]
-BIT_RATES = [115200, 57600, 38400, 19200, 9600]
+# BIT_RATES = [115200, 57600, 38400, 19200, 9600]
+BIT_RATES = [115200, 9600]
 
 
 def detect_bitrate_active(ubx):
