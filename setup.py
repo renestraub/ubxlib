@@ -10,7 +10,7 @@ setuptools.setup(
     name="ubxlib",
     version=version,
     author="Rene Straub",
-    author_email="straub@see5.com",
+    author_email="straub@see5.ch",
     description="ublox gnss library",
     long_description=long_description,
     long_description_content_type="text/markdown",
