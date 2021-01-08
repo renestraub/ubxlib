@@ -44,14 +44,22 @@ class X2_Proto(X2):
 
         res = ''
         if self.value & 0x01:
-            res += 'UBX'
+            res = self.concat(res, 'UBX')
         if self.value & 0x02:
-            res += ', NMEA'
+            res = self.concat(res, 'NMEA')
         if self.value & 0x04:
-            res += ', RTCM'
+            res = self.concat(res, 'RTCM')
 
         self.protocols = res
         return len
+
+    @staticmethod
+    def concat(text, add):
+        if len(text) == 0:
+            text = add
+        else:
+            text += ', ' + add
+        return text
 
     def __str__(self):
         return f'{self.name}: {self.protocols}'
