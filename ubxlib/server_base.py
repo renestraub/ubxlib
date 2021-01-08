@@ -5,7 +5,7 @@ import time
 from ubxlib.cid import UbxCID
 from ubxlib.frame import UbxFrame
 from ubxlib.frame_factory import FrameFactory
-from ubxlib.parser import UbxParser
+from ubxlib.parser_ubx import UbxParser
 from ubxlib.ubx_ack import UbxAckAck, UbxAckNak
 from ubxlib.ubx_mga_ack_data0 import UbxMgaAckData0
 
