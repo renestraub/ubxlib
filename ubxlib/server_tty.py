@@ -30,6 +30,8 @@ class GnssUBlox(UbxServerBase_):
         super().cleanup()
 
     def set_baudrate(self, baud):
+        # Making sure all data are sent before switching
+        self.serial_port.flush()
         self.serial_port.baudrate = baud
 
     def scan(self, interval_in_s=1.500):
