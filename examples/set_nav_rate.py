@@ -8,7 +8,7 @@ python3 -m examples.set_nav_rate
 import logging
 
 from ubxlib.server import GnssUBlox
-from ubxlib.ubx_cfg_rate import UbxCfgRatePoll, UbxCfgRate
+from ubxlib.ubx_cfg_rate import UbxCfgRatePoll
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -24,9 +24,6 @@ assert 1 <= rate <= 5
 # Create UBX library
 ubx = GnssUBlox()
 ubx.setup()
-
-# Register the frame types we use
-ubx.register_frame(UbxCfgRate)
 
 # Query modem for current rate settings
 poll_rate_cfg = UbxCfgRatePoll()
