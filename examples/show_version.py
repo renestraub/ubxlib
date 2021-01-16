@@ -8,7 +8,7 @@ python3 -m examples.show_version
 import logging
 
 from ubxlib.server import GnssUBlox
-from ubxlib.ubx_mon_ver import UbxMonVerPoll, UbxMonVer
+from ubxlib.ubx_mon_ver import UbxMonVerPoll
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -21,9 +21,6 @@ logger.setLevel(logging.INFO)
 # Create UBX library
 ubx = GnssUBlox()
 ubx.setup()
-
-# Register the frame types we use
-ubx.register_frame(UbxMonVer)
 
 # Poll version from modem
 poll_version = UbxMonVerPoll()
