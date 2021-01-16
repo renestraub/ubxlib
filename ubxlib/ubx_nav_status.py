@@ -14,6 +14,9 @@ class UbxNavStatusPoll(UbxNavStatus_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxNavStatus
+
 
 class UbxNavStatus(UbxNavStatus_):
     def __init__(self):
