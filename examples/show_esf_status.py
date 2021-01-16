@@ -10,7 +10,7 @@ import time
 
 from ubxlib.server import GnssUBlox
 from ubxlib.server_tty import GnssUBlox as GnssUBloxTTY    # TTY direct backend
-from ubxlib.ubx_esf_status import UbxEsfStatusPoll, UbxEsfStatus
+from ubxlib.ubx_esf_status import UbxEsfStatusPoll
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -27,10 +27,6 @@ res = ubx.setup()
 if not res:
     print('Cannot setup library')
     quit(10)
-
-
-# Register the frame types we use
-ubx.register_frame(UbxEsfStatus)
 
 # Get state and print in full once
 res = ubx.poll(UbxEsfStatusPoll())

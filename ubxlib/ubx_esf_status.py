@@ -14,6 +14,9 @@ class UbxEsfStatusPoll(UbxEsfStatus_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxEsfStatus
+
 
 class UbxEsfStatus(UbxEsfStatus_):
     def __init__(self):
