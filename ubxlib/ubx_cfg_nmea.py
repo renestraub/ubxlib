@@ -14,6 +14,9 @@ class UbxCfgNmeaPoll(UbxCfgNmea_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxCfgNmea
+
 
 class UbxCfgNmea(UbxCfgNmea_):
     def __init__(self):
