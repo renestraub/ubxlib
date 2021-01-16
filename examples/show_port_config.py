@@ -27,7 +27,6 @@ if not res:
     print('Cannot setup library')
     quit(10)
 
-
 # Poll version from modem
 poll_cfg = UbxCfgPrtPoll()
 poll_cfg.f.PortId = UbxCfgPrtPoll.PORTID_Uart

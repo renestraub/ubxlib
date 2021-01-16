@@ -35,7 +35,6 @@ class UbxServerBase_(object):
         self.frame_factory.destroy()
         self.frame_factory = None
 
-
     def set_retries(self, retries):
         logger.debug(f"setting max retries to {retries}")
         assert 0 <= retries <= 10
