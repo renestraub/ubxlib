@@ -10,7 +10,7 @@ python3 -m examples.set_lever_arm
 import logging
 
 from ubxlib.server import GnssUBlox
-from ubxlib.ubx_cfg_esfla import UbxCfgEsflaPoll, UbxCfgEsfla, UbxCfgEsflaSet
+from ubxlib.ubx_cfg_esfla import UbxCfgEsflaPoll, UbxCfgEsflaSet
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -23,9 +23,6 @@ logger.setLevel(logging.INFO)
 # Create UBX library
 ubx = GnssUBlox()
 ubx.setup()
-
-# Register the frame types we use
-ubx.register_frame(UbxCfgEsfla)
 
 # Query modem for current lever arm settings
 poll_esfla = UbxCfgEsflaPoll()
