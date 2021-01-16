@@ -2,6 +2,8 @@
 """
 Simple demonstrator that gets modem version
 
+Accesses first GNSS modem registered with gpsd daemon.
+
 Run as module from project root:
 python3 -m examples.show_version
 """
