@@ -14,6 +14,9 @@ class UbxCfgGnssPoll(UbxCfgGnss_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxCfgGnss
+
 
 class UbxCfgGnss(UbxCfgGnss_):
     GNSS_GPS = 0        # US GPS, worldwide

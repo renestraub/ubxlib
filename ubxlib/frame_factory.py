@@ -43,14 +43,6 @@ class FrameFactory(object):
         if not isinstance(frame_class, type):
             raise Exception("Can only register classes not instances (objects)")
 
-        # Registering the same frame class multiple times is considered
-        # bad style. For now we just ignore the call. Future versions
-        # will assert.
-        if frame_class.CID in self.__frames:
-            logger.warning(f'trying to register {frame_class} multiple times')
-            logger.warning('future releases will throw an Exception')
-            return
-
         self.__frames[frame_class.CID] = frame_class
 
     def build(self, cid):

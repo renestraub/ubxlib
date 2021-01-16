@@ -14,6 +14,9 @@ class UbxUpdSosPoll(UbxUpdSos_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxUpdSos
+
 
 class UbxUpdSos(UbxUpdSos_):
     def __init__(self):

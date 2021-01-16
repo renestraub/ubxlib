@@ -12,7 +12,7 @@ python3 -m examples.show_version_tty
 import logging
 
 from ubxlib.server_tty import GnssUBlox     # TTY direct backend
-from ubxlib.ubx_mon_ver import UbxMonVerPoll, UbxMonVer
+from ubxlib.ubx_mon_ver import UbxMonVerPoll
 
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -29,9 +29,6 @@ res = ubx.setup()
 if not res:
     print('Cannot setup library')
     quit(10)
-
-# Register the frame types we use
-ubx.register_frame(UbxMonVer)
 
 # Poll version from modem
 poll_version = UbxMonVerPoll()

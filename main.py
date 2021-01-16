@@ -6,15 +6,15 @@ import time
 # from ubxlib.server import GnssUBlox
 from ubxlib.server_tty import GnssUBlox     # TTY direct backend
 # from ubxlib.ubx_cfg_cfg import UbxCfgCfgAction
-from ubxlib.ubx_cfg_esfalg import UbxCfgEsfAlg
-# from ubxlib.ubx_cfg_nav5 import UbxCfgNav5, UbxCfgNav5Poll
-from ubxlib.ubx_cfg_nmea import UbxCfgNmea, UbxCfgNmeaPoll
+# from ubxlib.ubx_cfg_esfalg import UbxCfgEsfAlg
+from ubxlib.ubx_cfg_nav5 import UbxCfgNav5Poll
+from ubxlib.ubx_cfg_nmea import UbxCfgNmeaPoll
 # from ubxlib.ubx_cfg_rst import UbxCfgRstAction
-from ubxlib.ubx_cfg_tp5 import UbxCfgTp5, UbxCfgTp5Poll
-from ubxlib.ubx_esf_alg import UbxEsfAlg, UbxEsfAlgPoll
-from ubxlib.ubx_esf_status import UbxEsfStatus, UbxEsfStatusPoll
-from ubxlib.ubx_mon_ver import UbxMonVer, UbxMonVerPoll
-from ubxlib.ubx_nav_status import UbxNavStatus, UbxNavStatusPoll
+from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
+from ubxlib.ubx_esf_alg import UbxEsfAlgPoll
+from ubxlib.ubx_esf_status import UbxEsfStatusPoll
+from ubxlib.ubx_mon_ver import UbxMonVerPoll
+from ubxlib.ubx_nav_status import UbxNavStatusPoll
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
@@ -27,19 +27,6 @@ ubx = GnssUBlox('/dev/gnss0')
 
 ready = ubx.setup()
 assert ready
-
-# Register the frame types we use
-protocols = [UbxMonVer, UbxEsfStatus, UbxEsfAlg, UbxNavStatus]
-for p in protocols:
-    ubx.register_frame(p)
-
-# ubx.register_frame(UbxMonVer)
-# ubx.register_frame(UbxEsfStatus)
-ubx.register_frame(UbxCfgTp5)
-ubx.register_frame(UbxCfgNmea)
-# ubx.register_frame(UbxCfgNav5)
-ubx.register_frame(UbxCfgEsfAlg)
-# ubx.register_frame(UbxEsfAlg)
 
 
 m = UbxMonVerPoll()
@@ -61,10 +48,10 @@ m.reset(UbxCfgCfgAction.MASK_NavConf)    # To save CFG-NAV-NMEA
 ubx.set(m)
 """
 
-"""
 m = UbxCfgNav5Poll()
 res = ubx.poll(m)
 print(res)
+"""
 res.f.dynModel = 4
 ubx.set(res)
 """
@@ -88,7 +75,7 @@ m.pack()
 ubx.fire_and_forget(m)
 """
 
-# quit(0)
+quit(0)
 
 for i in range(0, 100):
     print(f'***** {i} ***********************')

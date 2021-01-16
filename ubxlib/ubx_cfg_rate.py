@@ -14,6 +14,9 @@ class UbxCfgRatePoll(UbxCfgRate_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxCfgRate
+
 
 class UbxCfgRate(UbxCfgRate_):
     def __init__(self):

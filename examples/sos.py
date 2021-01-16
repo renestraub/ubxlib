@@ -31,8 +31,8 @@ from ubxlib.server_tty import GnssUBlox
 from ubxlib.ubx_cfg_navx5 import UbxCfgNavx5, UbxCfgNavx5Poll
 from ubxlib.ubx_cfg_rst import UbxCfgRstAction
 from ubxlib.ubx_mga_ini_time_utc import UbxMgaIniTimeUtc
-from ubxlib.ubx_mon_ver import UbxMonVer, UbxMonVerPoll
-from ubxlib.ubx_upd_sos import UbxUpdSos, UbxUpdSosAction, UbxUpdSosPoll
+from ubxlib.ubx_mon_ver import UbxMonVerPoll
+from ubxlib.ubx_upd_sos import UbxUpdSosAction, UbxUpdSosPoll
 
 
 def show_version(ubx):
@@ -168,11 +168,6 @@ def main():
     # Create UBX library
     ubx = GnssUBlox('/dev/gnss0')
     ubx.setup()
-
-    # Register the frame types we use
-    ubx.register_frame(UbxMonVer)
-    ubx.register_frame(UbxUpdSos)
-    ubx.register_frame(UbxCfgNavx5)
 
     # Execute desired commands
     # show_version(ubx)

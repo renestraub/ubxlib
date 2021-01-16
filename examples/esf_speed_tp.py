@@ -25,7 +25,7 @@ import os
 import gpiod
 
 from ubxlib.server import GnssUBlox
-from ubxlib.ubx_cfg_tp5 import UbxCfgTp5, UbxCfgTp5Poll
+from ubxlib.ubx_cfg_tp5 import UbxCfgTp5Poll
 from ubxlib.ubx_esf_meas import UbxEsfMeas
 
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
@@ -117,7 +117,6 @@ def main():
 
     ubx = GnssUBlox()
     ubx.setup()
-    ubx.register_frame(UbxCfgTp5)
 
     configure_tp(ubx)
     io_event_loop(ubx)

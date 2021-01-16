@@ -14,6 +14,9 @@ class UbxCfgNav5Poll(UbxCfgNav5_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxCfgNav5
+
 
 class UbxCfgNav5(UbxCfgNav5_):
     def __init__(self):

@@ -24,9 +24,6 @@ logger.setLevel(logging.DEBUG)
 ubx = GnssUBlox('/dev/gnss0', 115200)
 ubx.setup()
 
-# Register the frame types we use
-ubx.register_frame(UbxCfgGnss)
-
 # Query modem for current protocol settings
 poll_nmea_cfg = UbxCfgGnssPoll()
 res = ubx.poll(poll_nmea_cfg)

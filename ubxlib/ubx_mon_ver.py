@@ -14,6 +14,9 @@ class UbxMonVerPoll(UbxMonVer_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxMonVer
+
 
 class UbxMonVer(UbxMonVer_):
     def __init__(self):

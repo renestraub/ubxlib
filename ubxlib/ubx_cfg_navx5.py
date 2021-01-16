@@ -14,6 +14,9 @@ class UbxCfgNavx5Poll(UbxCfgNavx5_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxCfgNavx5
+
 
 class UbxCfgNavx5(UbxCfgNavx5_):
     MASK1_AckAid = 1 << 10
