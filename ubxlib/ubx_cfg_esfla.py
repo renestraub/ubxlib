@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import Fields, Padding, U1, I2
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import I2, U1, Fields, Padding
 
 
 class UbxCfgEsfla_(UbxFrame):

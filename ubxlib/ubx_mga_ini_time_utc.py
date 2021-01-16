@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import Padding, U1, U2, U4, X1, I1
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import I1, U1, U2, U4, X1, Padding
 
 
 class UbxMgaIniTimeUtc_(UbxFrame):

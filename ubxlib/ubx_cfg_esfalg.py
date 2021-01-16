@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import X4, U4, I2
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import I2, U4, X4
 
 
 class UbxCfgEsfAlg_(UbxFrame):

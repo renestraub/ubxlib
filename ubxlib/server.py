@@ -3,7 +3,7 @@ import json
 import logging
 import socket
 
-from ubxlib.server_base import UbxServerBase_
+from .server_base import UbxServerBase_
 
 logger = logging.getLogger(__name__)
 

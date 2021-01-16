@@ -2,12 +2,12 @@ import binascii
 import logging
 import time
 
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.frame_factory import FrameFactory
-from ubxlib.parser_ubx import UbxParser
-from ubxlib.ubx_ack import UbxAckAck, UbxAckNak
-from ubxlib.ubx_mga_ack_data0 import UbxMgaAckData0
+from .cid import UbxCID
+from .frame import UbxFrame
+from .frame_factory import FrameFactory
+from .parser_ubx import UbxParser
+from .ubx_ack import UbxAckAck, UbxAckNak
+from .ubx_mga_ack_data0 import UbxMgaAckData0
 
 logger = logging.getLogger(__name__)
 

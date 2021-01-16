@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import U1
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import U1
 
 
 class UbxAckAck(UbxFrame):

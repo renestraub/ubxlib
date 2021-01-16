@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import Fields, CH
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import CH, Fields
 
 
 class UbxMonVer_(UbxFrame):
