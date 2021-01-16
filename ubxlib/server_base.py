@@ -24,19 +24,17 @@ class UbxServerBase_(object):
 
     def setup(self):
         # Register ACK-ACK/ACK-NAK frames, as they are used internally by this module
-        self.frame_factory.register(UbxAckAck)
-        self.frame_factory.register(UbxAckNak)
+        self._register_response(UbxAckAck)
+        self._register_response(UbxAckNak)
 
         # Register MGA-ACK-DATA0 so we can check result of MGA requests
-        self.frame_factory.register(UbxMgaAckData0)
+        self._register_response(UbxMgaAckData0)
         return True
 
     def cleanup(self):
         self.frame_factory.destroy()
         self.frame_factory = None
 
-    def register_frame(self, frame_type):
-        self.frame_factory.register(frame_type)
 
     def set_retries(self, retries):
         logger.debug(f"setting max retries to {retries}")
@@ -64,6 +62,14 @@ class UbxServerBase_(object):
         """
         assert isinstance(frame_poll, UbxFrame)
         logger.debug(f"polling {frame_poll.NAME}")
+
+        # Determine class of response frame so we can properly decode the incoming answer
+        # Currently we rely on frame factory concept. Type of frame is just registered
+        # as formerly done by user of the library
+        # TODO: Remove frame factory and decode frames in wait() method directly.
+        response_class = frame_poll._cls_response()
+        logger.debug(f'expecting response {response_class.NAME} {response_class.CID}')
+        self._register_response(response_class)
 
         # In general we expect a response frame with the exact same CID.
         # If this is a configuration message, also check ACK frame,
@@ -293,6 +299,9 @@ class UbxServerBase_(object):
     """
     Private methods
     """
+    def _register_response(self, frame_type):
+        self.frame_factory.register(frame_type)
+
     def _send(self, ubx_message):
         """
         Send ubx frame to modem via backend driver
