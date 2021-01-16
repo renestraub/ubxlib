@@ -16,6 +16,9 @@ class UbxCfgTp5Poll(UbxCfgTp5_):
 
         self.f.add(U1('tpIdx'))
 
+    def _cls_response(self):
+        return UbxCfgTp5
+
 
 class UbxCfgTp5(UbxCfgTp5_):
     def __init__(self):
