@@ -18,6 +18,9 @@ class UbxCfgPrtPoll(UbxCfgPrt_):
 
         self.f.add(U1('PortId'))
 
+    def _cls_response(self):
+        return UbxCfgPrtUart
+
 
 class UbxCfgPrtUart(UbxCfgPrt_):
     def __init__(self):
