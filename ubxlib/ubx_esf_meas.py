@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import Fields, X2, X4, U2, U4
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import U2, U4, X2, X4, Fields
 
 
 class UbxEsfMeas_(UbxFrame):

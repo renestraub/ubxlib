@@ -1,6 +1,6 @@
-from ubxlib.checksum import Checksum
-from ubxlib.cid import UbxCID
-from ubxlib.types import Fields
+from .checksum import Checksum
+from .cid import UbxCID
+from .types import Fields
 
 
 # TODO: Flag/State that shows whether frame is fully constructed and can be sent to module

@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import Fields, Padding, X1, U1, U4
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import U1, U4, X1, Fields, Padding
 
 
 class UbxEsfStatus_(UbxFrame):

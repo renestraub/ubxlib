@@ -2,9 +2,9 @@ import binascii
 import logging
 from enum import Enum
 
-from ubxlib.checksum import Checksum
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
+from .checksum import Checksum
+from .cid import UbxCID
+from .frame import UbxFrame
 
 logger = logging.getLogger(__name__)
 

@@ -4,9 +4,9 @@ import time
 from serial import Serial
 from serial.serialutil import SerialException
 
-from ubxlib.parser_ubx import UbxParser
-from ubxlib.parser_nmea import NmeaParser
-from ubxlib.server_base import UbxServerBase_
+from .parser_nmea import NmeaParser
+from .parser_ubx import UbxParser
+from .server_base import UbxServerBase_
 
 logger = logging.getLogger(__name__)
 

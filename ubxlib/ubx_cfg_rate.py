@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import U2
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import U2
 
 
 class UbxCfgRate_(UbxFrame):

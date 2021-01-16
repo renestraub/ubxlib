@@ -1,6 +1,6 @@
-from ubxlib.cid import UbxCID
-from ubxlib.frame import UbxFrame
-from ubxlib.types import Padding, U1, U2, X2, X4
+from .cid import UbxCID
+from .frame import UbxFrame
+from .types import U1, U2, X2, X4, Padding
 
 
 class UbxCfgNavx5_(UbxFrame):
