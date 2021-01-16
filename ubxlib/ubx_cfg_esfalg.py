@@ -14,6 +14,9 @@ class UbxCfgEsfAlgPoll(UbxCfgEsfAlg_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxCfgEsfAlg
+
 
 class UbxCfgEsfAlg(UbxCfgEsfAlg_):
     BITFIELD_doAutoMntAlg = 0x100

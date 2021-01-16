@@ -14,6 +14,9 @@ class UbxEsfAlgPoll(UbxEsfAlg_):
     def __init__(self):
         super().__init__()
 
+    def _cls_response(self):
+        return UbxEsfAlg
+
 
 class UbxEsfAlg(UbxEsfAlg_):
     def __init__(self):
