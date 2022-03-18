@@ -21,6 +21,7 @@ class GnssUBlox(UbxServerBase_):
         self.connect_msg = '?WATCH={"enable":true,"raw":2}'.encode()
         self.listen_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.enabled = False
+        self.release = None
 
     def setup(self):
         res = super().setup()
@@ -71,19 +72,20 @@ class GnssUBlox(UbxServerBase_):
 
             self.control_sock.sendall(cmd)
 
-            # checking for response (OK or ERROR)
+            # checking for response
             data = self.control_sock.recv(32)
             response = data.decode().strip()
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(f'response: {response}')
 
-            if 'OK' in response:
+            # 3.23.1 changed the response code from "OK", "ERROR" to JSON {"class":"ACK"} or
+            # {"class":"ERROR"}
+            # From https://gpsd.gitlab.io/gpsd/NEWS
+            #   Control messages to gpsd now return JSON, instead of, sometimes, OK or ERROR.
+            if 'OK' in response or 'ACK' in response:
                 success = True
             # else:
             #    logger.warning(f'command not accepted by gpsd')
-
-            # TODO: Why does this small delay make code more reliable?
-            # time.sleep(0.1)
 
             self.control_sock.shutdown(socket.SHUT_RDWR)
             self.control_sock.close()
@@ -149,8 +151,8 @@ class GnssUBlox(UbxServerBase_):
 
     def _parse_version(self, data):
         logger.debug('checking gpsd version')
-        release = data['release']
-        logger.debug(f' release: {release}')
+        self.release = data['release']
+        logger.debug(f' release: {self.release}')
 
     def _parse_devices(self, data):
         logger.debug('checking available devices')
