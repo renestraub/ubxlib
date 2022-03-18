@@ -68,8 +68,6 @@ BIT_RATES = [115200, 9600]
 def detect_bitrate_active(ubx):
     logger.info('active scan')
 
-    ubx.register_frame(UbxCfgPrtUart)
-
     baud_detected = None
     retries = ubx.set_retries(1)
     delay = ubx.set_retry_delay(1500)
