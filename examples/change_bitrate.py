@@ -54,9 +54,6 @@ def main():
     ubx = GnssUBlox(TTY, args.current)
     ubx.setup()
 
-    # Register the frame types we use
-    ubx.register_frame(UbxCfgPrtUart)
-
     # Get current tty port settings from modem
     poll_cfg = UbxCfgPrtPoll()
     poll_cfg.f.PortId = UbxCfgPrtPoll.PORTID_Uart
