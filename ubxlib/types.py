@@ -174,6 +174,89 @@ class X4(Item):
         super().__init__(name, value=0)
 
 
+class CfgKeyData(Item):
+    def __init__(self, name):
+        super().__init__(name)
+        self.value = None
+        # self.data = None
+        self.group_id = None
+        self.item_id = None
+
+    def unpack(self, data):
+        """
+        Unpacks configuration item key and data
+        - Data length is dynamic and depends on key[30..28], invalid length raise ValueError
+
+        @param data: bytearray to extract data from
+        @return: number of bytes consumed
+        """
+        if len(data) < 4:
+            raise ValueError
+
+        # TODO: Simplify by hardcoding lengths, fmt string
+        fmt_string = '<I'    # extract 32 bits in little endian mode
+        length = struct.calcsize(fmt_string)    # should always be 4
+        results = struct.unpack(fmt_string, data[:length])
+        header = results[0]
+        data = data[length:]
+        bytes_consumed = length
+
+        size = (header >> 28) & 0x7
+        self.group_id = (header >> 16) & 0xFF
+        self.item_id = (header >> 0) & 0xFFF
+
+        num_bits = [0, 1, 8, 16, 32, 64, 0, 0]
+        self.bits = num_bits[size]
+
+        size_names = ['<inv>', 'one bit', 'one byte', 'two bytes', 'four bytes', 'eight bytes', '<inv>', '<inv>']
+        self.size_name = size_names[size]
+
+        try:
+            if self.bits == 32:
+                results = struct.unpack("<I", data[:4])
+                self.value = results[0]
+                data = data[4:]
+                bytes_consumed += 4
+            elif self.bits == 16:
+                results = struct.unpack("<H", data[:2])
+                self.value = results[0]
+                data = data[2:]
+                bytes_consumed += 2
+            elif self.bits == 8:
+                results = struct.unpack("<B", data[:1])
+                self.value = results[0]
+                data = data[1:]
+                bytes_consumed += 1
+            elif self.bits == 1:
+                results = struct.unpack("<B", data[:1])
+                if results[0] == 0:
+                    self.value = False
+                elif results[0] == 1:
+                    self.value = True
+                else:
+                    raise ValueError
+                bytes_consumed += 1
+            elif self.bits == 64:
+                results = struct.unpack("<Q", data[:8])
+                self.value = results[0]
+                data = data[8:]
+                bytes_consumed += 8
+            else:
+                raise ValueError
+        except struct.error:
+            raise ValueError
+
+        return bytes_consumed
+
+    def __str__(self):
+        res = self.name + ': '
+        res += f'group: 0x{self.group_id:02x}'
+        res += f', item: 0x{self.item_id:03x}'
+        res += f', bits: {self.bits}'
+        res += f', value: 0x{self.value:x}'
+        return res
+
+
 class Fields(object):
     def __init__(self):
         super().__init__()
