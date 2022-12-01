@@ -136,6 +136,29 @@ class TestCfgKeyUnpack:
             u.unpack(bytearray.fromhex('00 00 00 40'))
 
 
+class TestCfgKeyCreation:
+    def test_u8(self):
+        u = CfgKeyData.from_u8('test0', 0x06, 0x2d, 0x11)
+        assert u.bits == 8
+        assert u.value == 0x11
+        assert u.group_id == 0x06
+        assert u.item_id == 0x2d
+
+    def test_u16(self):
+        u = CfgKeyData.from_u16('test0', 0x06, 0x2d, 0x2211)
+        assert u.bits == 16
+        assert u.value == 0x2211
+        assert u.group_id == 0x06
+        assert u.item_id == 0x2d
+
+    def test_u32(self):
+        u = CfgKeyData.from_u32('test0', 0x06, 0x2d, 0x44332211)
+        assert u.bits == 32
+        assert u.value == 0x44332211
+        assert u.group_id == 0x06
+        assert u.item_id == 0x2d
+
+
 class TestCfgKeyPack:
     CFG_SFIMU_IMU_MNTALG_YAW = 0x4006002d
 

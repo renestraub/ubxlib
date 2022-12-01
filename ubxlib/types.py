@@ -175,11 +175,24 @@ class X4(Item):
 
 
 class CfgKeyData(Item):
-    def __init__(self, name):
+    def __init__(self, name, group_id = None, item_id = None, bits = 0, value = None):
         super().__init__(name)
-        self.value = None
-        self.group_id = None
-        self.item_id = None
+        self.group_id = group_id
+        self.item_id = item_id
+        self.bits = bits
+        self.value = value
+
+    @classmethod
+    def from_u8(cls, name, group_id = None, item_id = None, value = None):
+        return cls(name, group_id, item_id, 8, value)
+
+    @classmethod
+    def from_u16(cls, name, group_id = None, item_id = None, value = None):
+        return cls(name, group_id, item_id, 16, value)
+
+    @classmethod
+    def from_u32(cls, name, group_id = None, item_id = None, value = None):
+        return cls(name, group_id, item_id, 32, value)
 
     def pack(self):
         """
@@ -257,9 +270,6 @@ class CfgKeyData(Item):
         num_bits = [0, 1, 8, 16, 32, 64, 0, 0]
         self.bits = num_bits[size]
 
-        size_names = ['<inv>', 'one bit', 'one byte', 'two bytes', 'four bytes', 'eight bytes', '<inv>', '<inv>']
-        self.size_name = size_names[size]
-
         try:
             if self.bits == 32:
                 results = struct.unpack("<I", data[:4])
@@ -302,7 +312,7 @@ class CfgKeyData(Item):
         res += f'group: 0x{self.group_id:02x}'
         res += f', item: 0x{self.item_id:03x}'
         res += f', bits: {self.bits}'
-        res += f', value: 0x{self.value:x}'
+        res += f', value: {self.value:d} (0x{self.value:x})'
         return res
 
 
