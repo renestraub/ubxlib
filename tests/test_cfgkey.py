@@ -3,7 +3,7 @@ import pytest
 from ubxlib.types import CfgKeyData
 
 
-class TestCfgKey:
+class TestCfgKeyUnpack:
     CFG_SFIMU_IMU_MNTALG_YAW = 0x4006002d
 
     def test_basic_unpack(self):
@@ -134,3 +134,125 @@ class TestCfgKey:
         with pytest.raises(ValueError):
             # No data at all
             u.unpack(bytearray.fromhex('00 00 00 40'))
+
+
+class TestCfgKeyPack:
+    CFG_SFIMU_IMU_MNTALG_YAW = 0x4006002d
+
+    def test_u64(self):
+        u = CfgKeyData('test0')
+        u.bits = 64
+        u.value = 0x8877665544332211
+        u.group_id = 0x06
+        u.item_id = 0x2d
+        data = u.pack()
+        assert data == bytearray.fromhex('2D 00 06 50 11 22 33 44 55 66 77 88')
+
+    def test_u32(self):
+        u = CfgKeyData('test1')
+        u.bits = 32
+        u.value = 0x44332211
+        u.group_id = 0x06
+        u.item_id = 0x2d
+        data = u.pack()
+        assert data == bytearray.fromhex('2D 00 06 40 11 22 33 44')
+
+    def test_u16(self):
+        u = CfgKeyData('test2')
+        u.bits = 16
+        u.value = 0x7788
+        u.group_id = 0x12
+        u.item_id = 0x145
+        data = u.pack()
+        assert data == bytearray.fromhex('45 01 12 30 88 77')
+
+    def test_u8(self):
+        u = CfgKeyData('test2')
+        u.bits = 8
+        u.value = 0x55
+        u.group_id = 0x06
+        u.item_id = 0x2d
+        data = u.pack()
+        assert data == bytearray.fromhex('2D 00 06 20 55')
+
+    def test_bool(self):
+        u = CfgKeyData('test2')
+        u.bits = 1
+        u.value = True
+        u.group_id = 0x06
+        u.item_id = 0x2d
+        data = u.pack()
+        assert data == bytearray.fromhex('2D 00 06 10 01')
+
+        u = CfgKeyData('test1')
+        u.bits = 1
+        u.value = False
+        u.group_id = 0x06
+        u.item_id = 0x2d
+        data = u.pack()
+        assert data == bytearray.fromhex('2D 00 06 10 00')
+
+    def test_basic_ids(self):
+        u = CfgKeyData('test3')
+        u.bits = 8
+        u.value = 0x66
+        u.group_id = 0x00
+        u.item_id = 0x000
+        data = u.pack()
+        assert data == bytearray.fromhex('00 00 00 20 66')
+
+        u = CfgKeyData('test4')
+        u.bits = 8
+        u.value = 0x55
+        u.group_id = 0xFF
+        u.item_id = 0x3FF
+        data = u.pack()
+        assert data == bytearray.fromhex('FF 03 FF 20 55')
+
+    def test_value_too_large(self):
+        u = CfgKeyData('test')
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test4')
+            u.bits = 16
+            u.value = 0x1FFFF
+            u.group_id = 0xFF
+            u.item_id = 0x3FF
+            _ = u.pack()
+
+        u = CfgKeyData('test')
+        with pytest.raises(ValueError):
+            # No data at all
+            u.unpack(bytearray.fromhex('00 00 00 40'))
+
+    def test_invalid_ids(self):
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test')
+            u.bits = 16
+            u.value = 0x1234
+            u.group_id = -1
+            u.item_id = 0
+            _ = u.pack()
+
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test')
+            u.bits = 16
+            u.value = 0x1234
+            u.group_id = 0x100
+            u.item_id = 0
+            _ = u.pack()
+
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test')
+            u.bits = 16
+            u.value = 0x1234
+            u.group_id = 0
+            u.item_id = -1
+            _ = u.pack()
+
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test')
+            u.bits = 16
+            u.value = 0x1234
+            u.group_id = 0
+            u.item_id = 0x1000
+            _ = u.pack()

@@ -178,9 +178,58 @@ class CfgKeyData(Item):
     def __init__(self, name):
         super().__init__(name)
         self.value = None
-        # self.data = None
         self.group_id = None
         self.item_id = None
+
+    def pack(self):
+        """
+        Dedicated pack method for configuration item key and data
+        """
+        if self.group_id < 0 or self.group_id >0xFF:
+            raise ValueError
+
+        if self.item_id < 0 or self.item_id >0xFFF:
+            raise ValueError
+
+        # Configuration key size mapping
+        if self.bits == 1:
+            size = 1
+        elif self.bits == 8:
+            size = 2
+        elif self.bits == 16:
+            size = 3
+        elif self.bits == 32:
+            size = 4
+        elif self.bits == 64:
+            size = 5
+        else:
+            raise ValueError
+
+        # Construct key
+        header  = (size & 0x7) << 28
+        header |= (self.group_id & 0xFF) << 16
+        header |= (self.item_id & 0xFFF) << 0
+        key = struct.pack('<I', header)  # 32 bit key, little endian
+
+        # Add variable length data
+        try:
+            if self.bits == 32:
+                value = struct.pack("<I", self.value)
+            elif self.bits == 16:
+                value = struct.pack("<H", self.value)
+            elif self.bits == 8:
+                value = struct.pack("<B", self.value)
+            elif self.bits == 1:
+                value = struct.pack("<B", 0 if self.value == False else 1)
+            elif self.bits == 64:
+                value = struct.pack("<Q", self.value)
+            else:
+                raise ValueError
+        except struct.error:
+            raise ValueError
+
+        data = key + value
+        return data
 
     def unpack(self, data):
         """
