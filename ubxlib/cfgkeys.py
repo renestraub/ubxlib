@@ -256,3 +256,10 @@ class CfgKeyData(Item):
         else:
             raise ValueError
         return res
+
+
+class CfgKeyValues:
+    @staticmethod
+    def from_keyvalues(key_vals: list):
+        cfg_keyvals = [CfgKeyData.from_key(key, value) for key, value in key_vals]
+        return cfg_keyvals

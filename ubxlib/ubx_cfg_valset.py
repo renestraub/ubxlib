@@ -1,11 +1,6 @@
-import logging
-
 from .cid import UbxCID
 from .frame import UbxFrame
 from .types import U1
-
-
-logger = logging.getLogger(__name__)
 
 
 class UbxCfgValSet_(UbxFrame):

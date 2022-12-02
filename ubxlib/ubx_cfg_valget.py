@@ -1,4 +1,4 @@
-import logging
+# import logging
 
 from .cid import UbxCID
 from .frame import UbxFrame
@@ -6,7 +6,8 @@ from .types import U1, U2, U4, Fields
 from .cfgkeys import CfgKeyData
 
 
-logger = logging.getLogger(__name__)
+# TODO: Remove
+# logger = logging.getLogger(__name__)
 
 
 class UbxCfgValGet_(UbxFrame):
@@ -68,17 +69,17 @@ class UbxCfgValGet(UbxCfgValGet_):
         # Parse variable content of response
         item = 0
         while len(work_data) >= 4:
-            logger.info(f'{len(work_data)}, {work_data}')
+            # logger.info(f'{len(work_data)}, {work_data}')
 
             # Extract one cfg key/data pair and add to object
             cfgkey = CfgKeyData(f'data{item}')
             consumed_bytes = cfgkey.unpack(work_data)
-            logger.info(cfgkey)
+            # logger.info(cfgkey)
             self.f.add(cfgkey)
 
             # Advance to next entry
             item += 1
             work_data = work_data[consumed_bytes:]
-            logger.info(f'consumed bytes {consumed_bytes}')
+            # logger.info(f'consumed bytes {consumed_bytes}')
 
         # TODO: Error check, no extra data
