@@ -1,7 +1,6 @@
 #
 # Configuration Keys for UbxValGet, UbxValSet
 #
-
 import struct
 
 from .types import Item
@@ -29,7 +28,7 @@ class UbxKeyId(object):
 
     # CFG-TP-*
     CFG_TP_PULSE_DEF = 0x20050023
-    CFG_TP_PULSE_LENGTH_DEF = 0x20050030 
+    CFG_TP_PULSE_LENGTH_DEF = 0x20050030
     CFG_TP_TP2_ENA = 0x10050012
     CFG_TP_PERIOD_TP2 = 0x4005000d
     CFG_TP_LEN_TP2 = 0x4005000f
@@ -82,6 +81,9 @@ class UbxKeyId(object):
 
 
 class CfgKeyData(Item):
+    SIZE_FROM_BITS = { 1: 1, 8: 2, 16: 3, 32: 4, 64: 5 }
+    BITS_FROM_SIZE = [ 0, 1, 8, 16, 32, 64, 0, 0 ]
+
     def __init__(self, name, group_id=None, item_id=None, bits=0, value=None):
         super().__init__(name)
         self.group_id = group_id
@@ -110,9 +112,8 @@ class CfgKeyData(Item):
 
     @staticmethod
     def bits_from_key(header):
-        num_bits = [0, 1, 8, 16, 32, 64, 0, 0]
         size = (header >> 28) & 0x7
-        return num_bits[size]
+        return CfgKeyData.BITS_FROM_SIZE[size]
 
     @staticmethod
     def group_from_key(header):
@@ -124,20 +125,10 @@ class CfgKeyData(Item):
 
     @staticmethod
     def build_header(group_id, item_id, bits):
-        # Configuration key size mapping
-        if bits == 1:
-            size = 1
-        elif bits == 8:
-            size = 2
-        elif bits == 16:
-            size = 3
-        elif bits == 32:
-            size = 4
-        elif bits == 64:
-            size = 5
-        else:
+        try:
+            size = CfgKeyData.SIZE_FROM_BITS[bits]
+        except KeyError:
             raise ValueError
-
         header = (size & 0x7) << 28
         header |= (group_id & 0xFF) << 16
         header |= (item_id & 0xFFF) << 0
@@ -146,6 +137,9 @@ class CfgKeyData(Item):
     def pack(self):
         """
         Dedicated pack method for configuration item key and data
+        Key is always U4, data can have 1..8 bytes depending on datatype
+
+        @return: bytearray with packed data
         """
         if self.group_id < 0 or self.group_id > 0xFF:
             raise ValueError
@@ -234,6 +228,10 @@ class CfgKeyData(Item):
         return bytes_consumed
 
     def __str__(self):
+        """
+        Format a string of the form
+        data1: key: CFG-TP-PULSE_DEF, bits: 8, value: 0 (0x00)
+        """
         header = CfgKeyData.build_header(self.group_id, self.item_id, self.bits)
         key_name = UbxKeyId.to_str(header)
 
@@ -244,5 +242,17 @@ class CfgKeyData(Item):
             res += f' group: 0x{self.group_id:02x}, item: 0x{self.item_id:03x}'
 
         res += f', bits: {self.bits}'
-        res += f', value: {self.value:d} (0x{self.value:x})'
+        if self.bits == 32:
+            res += f', value: {self.value:d} (0x{self.value:08x})'
+        elif self.bits == 16:
+            res += f', value: {self.value:d} (0x{self.value:04x})'
+        elif self.bits == 8:
+            res += f', value: {self.value:d} (0x{self.value:02x})'
+        elif self.bits == 1:
+            str = "True" if self.value else "False"
+            res += f', value: {str})'
+        elif self.bits == 64:
+            res += f', value: {self.value:d} (0x{self.value:016x})'
+        else:
+            raise ValueError
         return res
