@@ -24,7 +24,8 @@ class UbxCfgValSetAction(UbxCfgValSet_):
     def __init__(self, key_values):
         super().__init__()
 
-        # TODO: Wrapper for non-list keys, aka single argument key
+        if type(key_values) is not list:
+            key_values = [key_values]
 
         assert(len(key_values) >= 1)      # Need at least one key
         assert(len(key_values) <= 64)     # Max. allowed keys per request

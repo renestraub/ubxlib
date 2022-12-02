@@ -25,7 +25,8 @@ class UbxCfgValGetPoll(UbxCfgValGet_):
     def __init__(self, keys):
         super().__init__()
 
-        # TODO: Wrapper for non-list keys, aka single argument key
+        if type(keys) is not list:
+            keys = [keys]
 
         assert(len(keys) >= 1)      # Need at least one key
         assert(len(keys) <= 64)     # Max. allowed keys per request
