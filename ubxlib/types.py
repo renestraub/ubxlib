@@ -183,6 +183,13 @@ class CfgKeyData(Item):
         self.value = value
 
     @classmethod
+    def from_key(cls, key, value = None):
+        bits = CfgKeyData.bits_from_key(key)
+        group_id = CfgKeyData.group_from_key(key)
+        item_id = CfgKeyData.item_from_key(key)
+        return cls('<anon>', group_id, item_id, bits, value)
+
+    @classmethod
     def from_u8(cls, name, group_id = None, item_id = None, value = None):
         return cls(name, group_id, item_id, 8, value)
 
@@ -193,6 +200,20 @@ class CfgKeyData(Item):
     @classmethod
     def from_u32(cls, name, group_id = None, item_id = None, value = None):
         return cls(name, group_id, item_id, 32, value)
+
+    @staticmethod
+    def bits_from_key(header):
+        num_bits = [0, 1, 8, 16, 32, 64, 0, 0]
+        size = (header >> 28) & 0x7
+        return num_bits[size]
+
+    @staticmethod
+    def group_from_key(header):
+        return (header >> 16) & 0xFF
+
+    @staticmethod
+    def item_from_key(header):
+        return (header >> 0) & 0xFFF
 
     def pack(self):
         """
@@ -255,20 +276,14 @@ class CfgKeyData(Item):
         if len(data) < 4:
             raise ValueError
 
-        # TODO: Simplify by hardcoding lengths, fmt string
-        fmt_string = '<I'    # extract 32 bits in little endian mode
-        length = struct.calcsize(fmt_string)    # should always be 4
-        results = struct.unpack(fmt_string, data[:length])
-        header = results[0]
-        data = data[length:]
-        bytes_consumed = length
+        results = struct.unpack('<I', data[:4])     # extract 32 bits in little endian mode
+        key = results[0]
+        data = data[4:]
+        bytes_consumed = 4
 
-        size = (header >> 28) & 0x7
-        self.group_id = (header >> 16) & 0xFF
-        self.item_id = (header >> 0) & 0xFFF
-
-        num_bits = [0, 1, 8, 16, 32, 64, 0, 0]
-        self.bits = num_bits[size]
+        self.bits = CfgKeyData.bits_from_key(key)
+        self.group_id = CfgKeyData.group_from_key(key)
+        self.item_id = CfgKeyData.item_from_key(key)
 
         try:
             if self.bits == 32:
