@@ -12,8 +12,7 @@ import logging
 
 # from ubxlib.server import GnssUBlox
 from ubxlib.server_tty import GnssUBlox     # TTY direct backend
-from ubxlib.types import CfgKeyData
-from ubxlib.cfgkeys import UbxKeyId
+from ubxlib.cfgkeys import UbxKeyId, CfgKeyData
 from ubxlib.ubx_cfg_valget import UbxCfgValGetPoll
 from ubxlib.ubx_cfg_valset import UbxCfgValSetAction
 

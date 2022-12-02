@@ -2,7 +2,8 @@ import logging
 
 from .cid import UbxCID
 from .frame import UbxFrame
-from .types import U1, U2, U4, Fields, CfgKeyData
+from .types import U1, U2, U4, Fields
+from .cfgkeys import CfgKeyData
 
 
 logger = logging.getLogger(__name__)
