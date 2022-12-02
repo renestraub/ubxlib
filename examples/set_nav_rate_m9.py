@@ -9,8 +9,7 @@ import logging
 
 # from ubxlib.server import GnssUBlox   # gpsd socket
 from ubxlib.server_tty import GnssUBlox     # TTY direct backend
-from ubxlib.cfgkeys import UbxKeyId
-from ubxlib.types import CfgKeyData
+from ubxlib.cfgkeys import UbxKeyId, CfgKeyData
 from ubxlib.ubx_cfg_valset import UbxCfgValSetAction
 
 
@@ -18,7 +17,7 @@ FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
 logger.setLevel(logging.INFO)
-# logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)
 
 
 rate = int(input('Please enter desired rate in Hz (1..5): '))
