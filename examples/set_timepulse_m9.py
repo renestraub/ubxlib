@@ -9,9 +9,9 @@ python3 -m examples.set_timepulse_m9
 """
 import logging
 
-# from ubxlib.server import GnssUBlox
+# from ubxlib.server import GnssUBlox     # Working on top of gpsd
 from ubxlib.server_tty import GnssUBlox     # TTY direct backend
-from ubxlib.cfgkeys import UbxKeyId, CfgKeyData, CfgKeyValues
+from ubxlib.cfgkeys import UbxKeyId, CfgKeyValues
 from ubxlib.ubx_cfg_valset import UbxCfgValSetAction
 
 
@@ -21,13 +21,11 @@ logger = logging.getLogger('ubxlib')
 # logger.setLevel(logging.INFO)
 logger.setLevel(logging.DEBUG)
 
-
-# Create UBX library
-# ubx = GnssUBlox()
-ubx = GnssUBlox('/dev/gnss0', 115200)
+# Create UBX library, assumes 115'200 bps when using TTY backend
+ubx = GnssUBlox('/dev/gnss0')
 ubx.setup()
 
-# Define configuration, 
+# Define configuration,
 #  Set key = value pairs
 #  Convert them to a list of CfgKeyData items for UbxCfgValSetAction()
 cfg_keyvals = CfgKeyValues.from_keyvalues([

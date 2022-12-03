@@ -10,8 +10,8 @@ I.e. config key CFG-SIGNAL-GAL_ENA.
 """
 import logging
 
-# from ubxlib.server import GnssUBlox
-from ubxlib.server_tty import GnssUBlox     # TTY direct backend
+from ubxlib.server import GnssUBlox     # Working on top of gpsd
+# from ubxlib.server_tty import GnssUBlox     # TTY direct backend
 from ubxlib.cfgkeys import UbxKeyId, CfgKeyData
 from ubxlib.ubx_cfg_valget import UbxCfgValGetPoll
 from ubxlib.ubx_cfg_valset import UbxCfgValSetAction
@@ -20,18 +20,14 @@ from ubxlib.ubx_cfg_valset import UbxCfgValSetAction
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
-# logger.setLevel(logging.INFO)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.INFO)
+# logger.setLevel(logging.DEBUG)
 
-
-# Create UBX library
-# ubx = GnssUBlox()
-ubx = GnssUBlox('/dev/gnss0', 115200)
+# Create UBX library, assumes 115'200 bps when using TTY backend
+ubx = GnssUBlox('/dev/gnss0')
 ubx.setup()
 
-
 # Read currently active GNSS systems
-
 poll_signals = UbxCfgValGetPoll([
     UbxKeyId.CFG_SIGNAL_GPS_ENA,        # Result will be in data0
     UbxKeyId.CFG_SIGNAL_GPS_L1CA_ENA,
@@ -48,11 +44,10 @@ poll_signals = UbxCfgValGetPoll([
 res = ubx.poll(poll_signals)
 print(f'Current GNSS system configuration\n{res}')
 
-
 # Disable BDS and Glonass systems in two different ways
 # Note: data type is "one bit", valid values are 0 and 1
 
-#  Method 1) Modify received config keys 
+#  Method 1) Modify received config keys
 cfgkey_sig_bds = res.get('data4')
 cfgkey_sig_bds_b1 = res.get('data5')
 cfgkey_sig_bds.value = False
