@@ -9,7 +9,7 @@ This example uses the TTY server backend to have direct access to the modem w/o
 gpsd.
 
 Run as module from project root, e.g.:
-python3 -m examples.check_bitrate passive
+python3 -m examples.detect_bitrate passive
 
 In a real world application the expected bitrate (e.g. 115200) should be first
 in the list, followed by factory default value (9600).
