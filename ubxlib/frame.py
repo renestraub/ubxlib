@@ -55,7 +55,7 @@ class UbxFrame(object):
         self.data = self.f.pack()
 
     def unpack(self):
-        self.f.unpack(self.data)
+        return self.f.unpack(self.data)
 
     def _calc_checksum(self):
         self.checksum.reset()

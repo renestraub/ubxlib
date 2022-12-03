@@ -19,6 +19,9 @@ class GnssUBlox(UbxServerBase_):
         self.baudrate = baudrate
         self.serial_port = Serial()
 
+        logger.info('instantiating GnssUBlox on tty')
+        logger.info(f'using device {device_name}')
+
     def setup(self):
         res = super().setup()
         if res:

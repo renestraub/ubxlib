@@ -9,7 +9,7 @@ This example uses the TTY server backend to have direct access to the modem w/o
 gpsd.
 
 Run as module from project root, e.g.:
-python3 -m examples.check_bitrate passive
+python3 -m examples.detect_bitrate passive
 
 In a real world application the expected bitrate (e.g. 115200) should be first
 in the list, followed by factory default value (9600).
@@ -62,7 +62,8 @@ from ubxlib.ubx_cfg_prt import UbxCfgPrtPoll, UbxCfgPrtUart
 TTY = '/dev/gnss0'
 # BIT_RATES = [9600, 19200, 38400, 57600, 115200]
 # BIT_RATES = [115200, 57600, 38400, 19200, 9600]
-BIT_RATES = [115200, 9600]
+# BIT_RATES = [115200, 9600]
+BIT_RATES = [115200, 38400, 9600]
 
 
 def detect_bitrate_active(ubx):
