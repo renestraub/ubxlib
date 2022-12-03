@@ -23,6 +23,12 @@ class GnssUBlox(UbxServerBase_):
         self.enabled = False
         self.release = None
 
+        logger.info('instantiating GnssUBlox on gpsd')
+        if self.device_name:
+            logger.info(f'using port {self.device_name}')
+        else:
+            logger.info(f'using first available port')
+
     def setup(self):
         res = super().setup()
         self._open_port()
