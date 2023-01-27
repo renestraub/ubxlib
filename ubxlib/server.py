@@ -27,7 +27,7 @@ class GnssUBlox(UbxServerBase_):
         if self.device_name:
             logger.info(f'using port {self.device_name}')
         else:
-            logger.info(f'using first available port')
+            logger.info('using first available port')
 
     def setup(self):
         res = super().setup()

@@ -6,6 +6,12 @@ import struct
 from .types import Item
 
 
+class KeyInfo():
+    def __init__(self, name, signed=False):
+        self.name = name
+        self.signed = signed
+
+
 class UbxKeyId(object):
     CFG_SIGNAL_GPS_ENA = 0x1031001f
     CFG_SIGNAL_GPS_L1CA_ENA = 0x10310001
@@ -49,66 +55,74 @@ class UbxKeyId(object):
     CFG_TP_PERIOD_LOCK_TP2 = 0x4005000e
     CFG_TP_LEN_LOCK_TP2 = 0x40050010
 
-    KEY_NAMES = {
-        CFG_SIGNAL_GPS_ENA: "CFG-SIGNAL-GPS_ENA",
-        CFG_SIGNAL_GPS_L1CA_ENA: "CFG-SIGNAL-GPS_L1CA_ENA",
-        CFG_SIGNAL_SBAS_ENA: "CFG-SIGNAL-SBAS_ENA",
-        CFG_SIGNAL_SBAS_L1CA_ENA: "CFG-SIGNAL-SBAS_L1CA_ENA",
-        CFG_SIGNAL_GAL_ENA: "CFG-SIGNAL-GAL_ENA",
-        CFG_SIGNAL_GAL_E1_ENA: "CFG-SIGNAL-GAL_E1_ENA",
-        CFG_SIGNAL_BDS_ENA: "CFG-SIGNAL-BDS_ENA",
-        CFG_SIGNAL_BDS_B1_ENA: "CFG-SIGNAL-BDS_B1_ENA",
-        CFG_SIGNAL_GLO_ENA: "CFG-SIGNAL-GLO_ENA",
-        CFG_SIGNAL_GLO_L1_ENA: "CFG-SIGNAL-GLO_L1_ENA",
-        CFG_SIGNAL_QZSS_ENA: "CFG-SIGNAL-QZSS_ENA",
-        CFG_SIGNAL_QZSS_L1CA_ENA: "CFG-SIGNAL-QZSS_L1CA_ENA",
-        CFG_SIGNAL_QZSS_L1S_ENA: "CFG-SIGNAL-QZSS_L1S_ENA",
+    KEY_INFO = {
+        CFG_SIGNAL_GPS_ENA: KeyInfo("CFG-SIGNAL-GPS_ENA"),
+        CFG_SIGNAL_GPS_L1CA_ENA: KeyInfo("CFG-SIGNAL-GPS_L1CA_ENA"),
+        CFG_SIGNAL_SBAS_ENA: KeyInfo("CFG-SIGNAL-SBAS_ENA"),
+        CFG_SIGNAL_SBAS_L1CA_ENA: KeyInfo("CFG-SIGNAL-SBAS_L1CA_ENA"),
+        CFG_SIGNAL_GAL_ENA: KeyInfo("CFG-SIGNAL-GAL_ENA"),
+        CFG_SIGNAL_GAL_E1_ENA: KeyInfo("CFG-SIGNAL-GAL_E1_ENA"),
+        CFG_SIGNAL_BDS_ENA: KeyInfo("CFG-SIGNAL-BDS_ENA"),
+        CFG_SIGNAL_BDS_B1_ENA: KeyInfo("CFG-SIGNAL-BDS_B1_ENA"),
+        CFG_SIGNAL_GLO_ENA: KeyInfo("CFG-SIGNAL-GLO_ENA"),
+        CFG_SIGNAL_GLO_L1_ENA: KeyInfo("CFG-SIGNAL-GLO_L1_ENA"),
+        CFG_SIGNAL_QZSS_ENA: KeyInfo("CFG-SIGNAL-QZSS_ENA"),
+        CFG_SIGNAL_QZSS_L1CA_ENA: KeyInfo("CFG-SIGNAL-QZSS_L1CA_ENA"),
+        CFG_SIGNAL_QZSS_L1S_ENA: KeyInfo("CFG-SIGNAL-QZSS_L1S_ENA"),
 
-        CFG_NMEA_PROTVER: "CFG-NMEA-PROTVER",
-        CFG_UART1_BAUDRATE: "CFG-UART1-BAUDRATE",
+        CFG_NMEA_PROTVER: KeyInfo("CFG-NMEA-PROTVER"),
+        CFG_UART1_BAUDRATE: KeyInfo("CFG-UART1-BAUDRATE"),
 
-        CFG_NAVSPG_FIXMODE: "CFG-NAVSPG-FIXMODE",
-        CFG_NAVSPG_DYNMODEL: "CFG-NAVSPG-DYNMODEL",
+        CFG_NAVSPG_FIXMODE: KeyInfo("CFG-NAVSPG-FIXMODE"),
+        CFG_NAVSPG_DYNMODEL: KeyInfo("CFG-NAVSPG-DYNMODEL"),
 
-        CFG_RATE_MEAS: "CFG-RATE_MEAS",
-        CFG_RATE_NAV: "CFG-RATE-NAV",
-        CFG_RATE_NAV_PRIO: "CFG-RATE-NAV_PRIO",
+        CFG_RATE_MEAS: KeyInfo("CFG-RATE_MEAS"),
+        CFG_RATE_NAV: KeyInfo("CFG-RATE-NAV"),
+        CFG_RATE_NAV_PRIO: KeyInfo("CFG-RATE-NAV_PRIO"),
 
-        CFG_SFCORE_USE_SF: "CFG-SFCORE-USE-SF",
-        CFG_SFIMU_IMU_MNTALG_YAW: "CFG-SFIMU-IMU_MNTALG_YAW",
-        CFG_SFIMU_IMU_MNTALG_PITCH: "CFG-SFIMU-IMU_MNTALG_PITCH",
-        CFG_SFIMU_IMU_MNTALG_ROLL: "CFG-SFIMU-IMU_MNTALG_ROLL",
+        CFG_SFCORE_USE_SF: KeyInfo("CFG-SFCORE-USE-SF"),
+        CFG_SFIMU_IMU_MNTALG_YAW: KeyInfo("CFG-SFIMU-IMU_MNTALG_YAW"),
+        CFG_SFIMU_IMU_MNTALG_PITCH: KeyInfo("CFG-SFIMU-IMU_MNTALG_PITCH", True),    # Signed value
+        CFG_SFIMU_IMU_MNTALG_ROLL: KeyInfo("CFG-SFIMU-IMU_MNTALG_ROLL", True),    # Signed value
 
-        CFG_TP_PULSE_DEF: "CFG-TP-PULSE_DEF",
-        CFG_TP_PULSE_LENGTH_DEF: "CFG-TP-PULSE_LENGTH_DEF",
-        CFG_TP_TP2_ENA: "CFG-TP-TP2_ENA",
-        CFG_TP_PERIOD_TP2: "CFG-TP-PERIOD_TP2",
-        CFG_TP_LEN_TP2: "CFG-TP-LEN_TP2",
-        CFG_TP_TIMEGRID_TP2: "CFG-TP-TIMEGRID_TP2",
-        CFG_TP_ALIGN_TO_TOW_TP2: "CFG-TP-ALIGN_TO_TOW_TP2",
-        CFG_TP_USE_LOCKED_TP2: "CFG-TP-USE_LOCKED_TP2",
-        CFG_TP_POL_TP2: "CFG-TP-POL_TP2",
-        CFG_TP_PERIOD_LOCK_TP2: "CFG-TP-PERIOD_LOCK_TP2",
-        CFG_TP_LEN_LOCK_TP2: "CFG-TP-LEN_LOCK_TP2",
+        CFG_TP_PULSE_DEF: KeyInfo("CFG-TP-PULSE_DEF"),
+        CFG_TP_PULSE_LENGTH_DEF: KeyInfo("CFG-TP-PULSE_LENGTH_DEF"),
+        CFG_TP_TP2_ENA: KeyInfo("CFG-TP-TP2_ENA"),
+        CFG_TP_PERIOD_TP2: KeyInfo("CFG-TP-PERIOD_TP2"),
+        CFG_TP_LEN_TP2: KeyInfo("CFG-TP-LEN_TP2"),
+        CFG_TP_TIMEGRID_TP2: KeyInfo("CFG-TP-TIMEGRID_TP2"),
+        CFG_TP_ALIGN_TO_TOW_TP2: KeyInfo("CFG-TP-ALIGN_TO_TOW_TP2"),
+        CFG_TP_USE_LOCKED_TP2: KeyInfo("CFG-TP-USE_LOCKED_TP2"),
+        CFG_TP_POL_TP2: KeyInfo("CFG-TP-POL_TP2"),
+        CFG_TP_PERIOD_LOCK_TP2: KeyInfo("CFG-TP-PERIOD_LOCK_TP2"),
+        CFG_TP_LEN_LOCK_TP2: KeyInfo("CFG-TP-LEN_LOCK_TP2"),
     }
 
     @staticmethod
+    def sign(key):
+        if key in UbxKeyId.KEY_INFO:
+            return UbxKeyId.KEY_INFO[key].signed
+        else:
+            return False
+
+    @staticmethod
     def to_str(key):
-        if key in UbxKeyId.KEY_NAMES:
-            return UbxKeyId.KEY_NAMES[key]
+        if key in UbxKeyId.KEY_INFO:
+            return UbxKeyId.KEY_INFO[key].name
         else:
             return None
 
 
 class CfgKeyData(Item):
-    SIZE_FROM_BITS = { 1: 1, 8: 2, 16: 3, 32: 4, 64: 5 }
-    BITS_FROM_SIZE = [ 0, 1, 8, 16, 32, 64, 0, 0 ]
+    SIZE_FROM_BITS = {1: 1, 8: 2, 16: 3, 32: 4, 64: 5}
+    BITS_FROM_SIZE = [0, 1, 8, 16, 32, 64, 0, 0]
 
-    def __init__(self, name, group_id=None, item_id=None, bits=0, value=None):
+    def __init__(self, name, group_id=None, item_id=None, bits=0, value=None, signed=False):
         super().__init__(name)
         self.group_id = group_id
         self.item_id = item_id
         self.bits = bits
+        self.signed = signed
         self.value = value
 
     @classmethod
@@ -116,19 +130,10 @@ class CfgKeyData(Item):
         bits = CfgKeyData.bits_from_key(key)
         group_id = CfgKeyData.group_from_key(key)
         item_id = CfgKeyData.item_from_key(key)
-        return cls('<anon>', group_id, item_id, bits, value)
-
-    # @classmethod
-    # def from_u8(cls, name, group_id=None, item_id=None, value=None):
-    #     return cls(name, group_id, item_id, 8, value)
-
-    # @classmethod
-    # def from_u16(cls, name, group_id=None, item_id=None, value=None):
-    #     return cls(name, group_id, item_id, 16, value)
-
-    # @classmethod
-    # def from_u32(cls, name, group_id=None, item_id=None, value=None):
-    #     return cls(name, group_id, item_id, 32, value)
+        # Whether value type is signed int can't be determined from key information
+        # Check key database
+        signed = UbxKeyId.sign(key)
+        return cls('<anon>', group_id, item_id, bits, value, signed)
 
     @staticmethod
     def bits_from_key(header):
@@ -163,32 +168,42 @@ class CfgKeyData(Item):
         """
         if self.group_id < 0 or self.group_id > 0xFF:
             raise ValueError
-
         if self.item_id < 0 or self.item_id > 0xFFF:
             raise ValueError
 
+        key = self._pack_keyid()    # Build 32 bit item key ID
+        value = self._pack_value()  # Add variable length data
+        data = key + value
+        return data
+
+    def _pack_keyid(self):
         header = CfgKeyData.build_header(self.group_id, self.item_id, self.bits)
         key = struct.pack('<I', header)  # 32 bit key, little endian
+        return key
 
-        # Add variable length data
+    def _pack_value(self):
         try:
-            if self.bits == 32:
-                value = struct.pack("<I", self.value)
-            elif self.bits == 16:
-                value = struct.pack("<H", self.value)
+            if self.bits == 1:
+                value = struct.pack("<B", 1 if self.value else 0)
             elif self.bits == 8:
                 value = struct.pack("<B", self.value)
-            elif self.bits == 1:
-                value = struct.pack("<B", 0 if self.value == False else 1)
+            elif self.bits == 16:
+                if self.signed:
+                    value = struct.pack("<h", self.value)
+                else:
+                    value = struct.pack("<H", self.value)
+            elif self.bits == 32:
+                if self.signed:
+                    value = struct.pack("<i", self.value)
+                else:
+                    value = struct.pack("<I", self.value)
             elif self.bits == 64:
                 value = struct.pack("<Q", self.value)
             else:
                 raise ValueError
         except struct.error:
             raise ValueError
-
-        data = key + value
-        return data
+        return value
 
     def unpack(self, data):
         """
@@ -209,24 +224,10 @@ class CfgKeyData(Item):
         self.bits = CfgKeyData.bits_from_key(key)
         self.group_id = CfgKeyData.group_from_key(key)
         self.item_id = CfgKeyData.item_from_key(key)
+        self.signed = UbxKeyId.sign(key)    # Signedness can't be decoded from data, query KeyId class
 
         try:
-            if self.bits == 32:
-                results = struct.unpack("<I", data[:4])
-                self.value = results[0]
-                data = data[4:]
-                bytes_consumed += 4
-            elif self.bits == 16:
-                results = struct.unpack("<H", data[:2])
-                self.value = results[0]
-                data = data[2:]
-                bytes_consumed += 2
-            elif self.bits == 8:
-                results = struct.unpack("<B", data[:1])
-                self.value = results[0]
-                data = data[1:]
-                bytes_consumed += 1
-            elif self.bits == 1:
+            if self.bits == 1:
                 results = struct.unpack("<B", data[:1])
                 if results[0] == 0:
                     self.value = False
@@ -235,6 +236,27 @@ class CfgKeyData(Item):
                 else:
                     raise ValueError
                 bytes_consumed += 1
+            elif self.bits == 8:
+                results = struct.unpack("<B", data[:1])
+                self.value = results[0]
+                data = data[1:]
+                bytes_consumed += 1
+            elif self.bits == 16:
+                if self.signed:
+                    results = struct.unpack("<h", data[:2])
+                else:
+                    results = struct.unpack("<H", data[:2])
+                self.value = results[0]
+                data = data[2:]
+                bytes_consumed += 2
+            elif self.bits == 32:
+                if self.signed:
+                    results = struct.unpack("<i", data[:4])
+                else:
+                    results = struct.unpack("<I", data[:4])
+                self.value = results[0]
+                data = data[4:]
+                bytes_consumed += 4
             elif self.bits == 64:
                 results = struct.unpack("<Q", data[:8])
                 self.value = results[0]
@@ -262,15 +284,21 @@ class CfgKeyData(Item):
             res += f' group: 0x{self.group_id:02x}, item: 0x{self.item_id:03x}'
 
         res += f', bits: {self.bits}'
-        if self.bits == 32:
-            res += f', value: {self.value:d} (0x{self.value:08x})'
-        elif self.bits == 16:
-            res += f', value: {self.value:d} (0x{self.value:04x})'
+        if self.bits == 1:
+            str = "True" if self.value else "False"
+            res += f', value: {str}'
         elif self.bits == 8:
             res += f', value: {self.value:d} (0x{self.value:02x})'
-        elif self.bits == 1:
-            str = "True" if self.value else "False"
-            res += f', value: {str})'
+        elif self.bits == 16:
+            if self.signed:
+                res += f', value: {self.value:d}'
+            else:
+                res += f', value: {self.value:d} (0x{self.value:04x})'
+        elif self.bits == 32:
+            if self.signed:
+                res += f', value: {self.value:d}'
+            else:
+                res += f', value: {self.value:d} (0x{self.value:08x})'
         elif self.bits == 64:
             res += f', value: {self.value:d} (0x{self.value:016x})'
         else:
