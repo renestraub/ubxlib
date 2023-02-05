@@ -114,8 +114,13 @@ class UbxKeyId(object):
 
 
 class CfgKeyData(Item):
+    # Mapping of UBX header size information to bit sizes of value
     SIZE_FROM_BITS = {1: 1, 8: 2, 16: 3, 32: 4, 64: 5}
     BITS_FROM_SIZE = [0, 1, 8, 16, 32, 64, 0, 0]
+
+    # Number of value bytes in UBX message for given bitlength
+    # Note the special case for (one) bit values
+    BYTES_FROM_BITS = {1: 1, 8: 1, 16: 2, 32: 4, 64: 8}
 
     def __init__(self, name, group_id=None, item_id=None, bits=0, value=None, signed=False):
         super().__init__(name)
@@ -127,29 +132,36 @@ class CfgKeyData(Item):
 
     @classmethod
     def from_key(cls, key, value=None):
-        bits = CfgKeyData.bits_from_key(key)
-        group_id = CfgKeyData.group_from_key(key)
-        item_id = CfgKeyData.item_from_key(key)
+        bits = CfgKeyData._bits_from_key(key)
+        group_id = CfgKeyData._group_from_key(key)
+        item_id = CfgKeyData._item_from_key(key)
         # Whether value type is signed int can't be determined from key information
         # Check key database
         signed = UbxKeyId.sign(key)
         return cls('<anon>', group_id, item_id, bits, value, signed)
 
     @staticmethod
-    def bits_from_key(header):
+    def _bits_from_key(header):
         size = (header >> 28) & 0x7
         return CfgKeyData.BITS_FROM_SIZE[size]
 
     @staticmethod
-    def group_from_key(header):
+    def _bytes_for_size(bits):
+        if bits in CfgKeyData.BYTES_FROM_BITS:
+            return CfgKeyData.BYTES_FROM_BITS[bits]
+        else:
+            raise ValueError
+
+    @staticmethod
+    def _group_from_key(header):
         return (header >> 16) & 0xFF
 
     @staticmethod
-    def item_from_key(header):
+    def _item_from_key(header):
         return (header >> 0) & 0xFFF
 
     @staticmethod
-    def build_header(group_id, item_id, bits):
+    def _build_header(group_id, item_id, bits):
         try:
             size = CfgKeyData.SIZE_FROM_BITS[bits]
         except KeyError:
@@ -171,37 +183,44 @@ class CfgKeyData(Item):
         if self.item_id < 0 or self.item_id > 0xFFF:
             raise ValueError
 
-        key = self._pack_keyid()    # Build 32 bit item key ID
-        value = self._pack_value()  # Add variable length data
-        data = key + value
+        try:
+            key = self._pack_keyid()    # Build 32 bit item key ID
+            value = self._pack_value()  # Add variable length data
+            data = key + value
+        except struct.error:
+            raise ValueError
+
         return data
 
     def _pack_keyid(self):
-        header = CfgKeyData.build_header(self.group_id, self.item_id, self.bits)
+        header = CfgKeyData._build_header(self.group_id, self.item_id, self.bits)
         key = struct.pack('<I', header)  # 32 bit key, little endian
         return key
 
     def _pack_value(self):
-        try:
-            if self.bits == 1:
-                value = struct.pack("<B", 1 if self.value else 0)
-            elif self.bits == 8:
-                value = struct.pack("<B", self.value)
-            elif self.bits == 16:
-                if self.signed:
-                    value = struct.pack("<h", self.value)
-                else:
-                    value = struct.pack("<H", self.value)
-            elif self.bits == 32:
-                if self.signed:
-                    value = struct.pack("<i", self.value)
-                else:
-                    value = struct.pack("<I", self.value)
-            elif self.bits == 64:
-                value = struct.pack("<Q", self.value)
+        if self.bits == 1:
+            value = struct.pack("<B", 1 if self.value else 0)
+        elif self.bits == 8:
+            if self.signed:
+                value = struct.pack("<b", self.value)
             else:
-                raise ValueError
-        except struct.error:
+                value = struct.pack("<B", self.value)
+        elif self.bits == 16:
+            if self.signed:
+                value = struct.pack("<h", self.value)
+            else:
+                value = struct.pack("<H", self.value)
+        elif self.bits == 32:
+            if self.signed:
+                value = struct.pack("<i", self.value)
+            else:
+                value = struct.pack("<I", self.value)
+        elif self.bits == 64:
+            if self.signed:
+                value = struct.pack("<q", self.value)
+            else:
+                value = struct.pack("<Q", self.value)
+        else:
             raise ValueError
         return value
 
@@ -216,65 +235,68 @@ class CfgKeyData(Item):
         if len(data) < 4:
             raise ValueError
 
-        results = struct.unpack('<I', data[:4])     # extract 32 bits in little endian mode
+        results = struct.unpack('<I', data[:4])     # extract 32 unsigned bits in little endian mode
         key = results[0]
         data = data[4:]
         bytes_consumed = 4
 
-        self.bits = CfgKeyData.bits_from_key(key)
-        self.group_id = CfgKeyData.group_from_key(key)
-        self.item_id = CfgKeyData.item_from_key(key)
+        self.bits = CfgKeyData._bits_from_key(key)
+        self.group_id = CfgKeyData._group_from_key(key)
+        self.item_id = CfgKeyData._item_from_key(key)
         self.signed = UbxKeyId.sign(key)    # Signedness can't be decoded from data, query KeyId class
 
         try:
-            if self.bits == 1:
-                results = struct.unpack("<B", data[:1])
-                if results[0] == 0:
-                    self.value = False
-                elif results[0] == 1:
-                    self.value = True
-                else:
-                    raise ValueError
-                bytes_consumed += 1
-            elif self.bits == 8:
-                results = struct.unpack("<B", data[:1])
-                self.value = results[0]
-                data = data[1:]
-                bytes_consumed += 1
-            elif self.bits == 16:
-                if self.signed:
-                    results = struct.unpack("<h", data[:2])
-                else:
-                    results = struct.unpack("<H", data[:2])
-                self.value = results[0]
-                data = data[2:]
-                bytes_consumed += 2
-            elif self.bits == 32:
-                if self.signed:
-                    results = struct.unpack("<i", data[:4])
-                else:
-                    results = struct.unpack("<I", data[:4])
-                self.value = results[0]
-                data = data[4:]
-                bytes_consumed += 4
-            elif self.bits == 64:
-                results = struct.unpack("<Q", data[:8])
-                self.value = results[0]
-                data = data[8:]
-                bytes_consumed += 8
-            else:
-                raise ValueError
+            bytes_consumed += self._unpack_value(data)
         except struct.error:
             raise ValueError
 
         return bytes_consumed
+
+    def _unpack_value(self, data):
+        bytes_needed = CfgKeyData._bytes_for_size(self.bits)
+        if self.bits == 1:
+            results = struct.unpack("<B", data[:bytes_needed])
+            if results[0] == 0:
+                self.value = False
+            elif results[0] == 1:
+                self.value = True
+            else:
+                raise ValueError
+        elif self.bits == 8:
+            if self.signed:
+                results = struct.unpack("<b", data[:bytes_needed])
+            else:
+                results = struct.unpack("<B", data[:bytes_needed])
+            self.value = results[0]
+        elif self.bits == 16:
+            if self.signed:
+                results = struct.unpack("<h", data[:bytes_needed])
+            else:
+                results = struct.unpack("<H", data[:bytes_needed])
+            self.value = results[0]
+        elif self.bits == 32:
+            if self.signed:
+                results = struct.unpack("<i", data[:bytes_needed])
+            else:
+                results = struct.unpack("<I", data[:bytes_needed])
+            self.value = results[0]
+        elif self.bits == 64:
+            if self.signed:
+                results = struct.unpack("<q", data[:bytes_needed])
+            else:
+                results = struct.unpack("<Q", data[:bytes_needed])
+            self.value = results[0]
+        else:
+            raise ValueError
+
+        return bytes_needed
 
     def __str__(self):
         """
         Format a string of the form
         data1: key: CFG-TP-PULSE_DEF, bits: 8, value: 0 (0x00)
         """
-        header = CfgKeyData.build_header(self.group_id, self.item_id, self.bits)
+        header = CfgKeyData._build_header(self.group_id, self.item_id, self.bits)
         key_name = UbxKeyId.to_str(header)
 
         res = self.name + ':'
@@ -288,7 +310,10 @@ class CfgKeyData(Item):
             str = "True" if self.value else "False"
             res += f', value: {str}'
         elif self.bits == 8:
-            res += f', value: {self.value:d} (0x{self.value:02x})'
+            if self.signed:
+                res += f', value: {self.value:d}'
+            else:
+                res += f', value: {self.value:d} (0x{self.value:02x})'
         elif self.bits == 16:
             if self.signed:
                 res += f', value: {self.value:d}'
@@ -300,7 +325,10 @@ class CfgKeyData(Item):
             else:
                 res += f', value: {self.value:d} (0x{self.value:08x})'
         elif self.bits == 64:
-            res += f', value: {self.value:d} (0x{self.value:016x})'
+            if self.signed:
+                res += f', value: {self.value:d}'
+            else:
+                res += f', value: {self.value:d} (0x{self.value:016x})'
         else:
             raise ValueError
         return res

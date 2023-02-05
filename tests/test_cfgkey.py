@@ -107,12 +107,20 @@ class TestCfgKeyUnpack:
         assert u.value == 0xFFFF
 
     def test_i16(self):
-        u = CfgKeyData('test')
+        # Signed key
+        u = CfgKeyData('testNegativ')
         consumed = u.unpack(bytearray.fromhex('2e 00 06 30 00 80'))
         assert consumed == 6
         assert u.bits == 16
         assert u.signed is True
         assert u.value == -32768
+
+        u = CfgKeyData('testPositiv')
+        consumed = u.unpack(bytearray.fromhex('2e 00 06 30 FF 7F'))
+        assert consumed == 6
+        assert u.bits == 16
+        assert u.signed is True
+        assert u.value == 32767
 
     def test_u32(self):
         u = CfgKeyData('test')
@@ -135,6 +143,7 @@ class TestCfgKeyUnpack:
         consumed = u.unpack(bytearray.fromhex('00 00 00 50 11 22 33 44 55 66 77 88'))
         assert consumed == 12
         assert u.bits == 64
+        assert u.signed is False
         assert u.value == 0x8877665544332211
 
     def test_too_few_data(self):
@@ -221,6 +230,10 @@ class TestCfgKeyPack:
         data = u.pack()
         assert data == bytearray.fromhex('45 01 12 30 00 80')
 
+        u = CfgKeyData('test2', 0x12, 0x145, 16, 32767, True)
+        data = u.pack()
+        assert data == bytearray.fromhex('45 01 12 30 FF 7F')
+
     def test_u8(self):
         u = CfgKeyData('test2', 0x06, 0x2d, 8, 0x55)
         data = u.pack()
@@ -245,14 +258,37 @@ class TestCfgKeyPack:
         assert data == bytearray.fromhex('FF 03 FF 20 55')
 
     def test_value_too_large(self):
-        u = CfgKeyData('test')
+        # Unsigned 8 Bit
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test4', 0xFF, 0x3FF, 8, 0xFF+1)
+            _ = u.pack()
+
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test4', 0xFF, 0x3FF, 8, -1)
+            _ = u.pack()
+
+        # Unsigned/Signed 16 Bit
         with pytest.raises(ValueError):
             u = CfgKeyData('test4', 0xFF, 0x3FF, 16, 0xFFFF+1)
             _ = u.pack()
 
-        u = CfgKeyData('test')
+        # Unsigned 32 Bit
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test4', 0xFF, 0x3FF, 16, 32768, signed=True)
+            _ = u.pack()
+
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test4', 0xFF, 0x3FF, 16, -32769, signed=True)
+            _ = u.pack()
+
+        # Unsigned 64 Bit
+        with pytest.raises(ValueError):
+            u = CfgKeyData('test4', 0xFF, 0x3FF, 32, 0xFFFFFFFF+1)
+            _ = u.pack()
+
         with pytest.raises(ValueError):
             # No data at all
+            u = CfgKeyData('test')
             u.unpack(bytearray.fromhex('00 00 00 40'))
 
     def test_invalid_ids(self):
