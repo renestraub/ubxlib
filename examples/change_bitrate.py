@@ -18,8 +18,6 @@ from ubxlib.server_tty import GnssUBlox
 from ubxlib.ubx_cfg_prt import UbxCfgPrtPoll, UbxCfgPrtUart
 
 
-TTY = '/dev/ttyS3'
-
 FORMAT = '%(asctime)-15s %(levelname)-8s %(message)s'
 logging.basicConfig(format=FORMAT)
 logger = logging.getLogger('ubxlib')
@@ -37,6 +35,10 @@ def main():
         help='be verbose, show debug output')
 
     parser.add_argument(
+        'tty',
+        help="tty of receiver (i.e. /dev/ttyS1)")
+
+    parser.add_argument(
         'current',
         help="current bitrate of receiver", type=int)
 
@@ -51,7 +53,7 @@ def main():
 
     # Create UBX library
     # Note: tty and baudrate must match current receiver configuration
-    ubx = GnssUBlox(TTY, args.current)
+    ubx = GnssUBlox(args.tty, args.current)
     ubx.setup()
 
     # Get current tty port settings from modem
